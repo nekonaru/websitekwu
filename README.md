@@ -2,7 +2,6 @@
 
 Website toko kampus dengan dua jalur transaksi: **B2C** (katalog, pemesanan, checkout) dan **B2B** (permintaan penawaran grosir / RFQ), dilengkapi dashboard admin dan chatbot Asisten KWU.
 
-Dibangun sesuai rancangan dalam `KWU_MASTER_PROMPT_GABUNGAN.md`.
 
 ## Stack
 
