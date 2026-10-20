@@ -197,7 +197,7 @@ export default function Checkout() {
             </div>
             <div className="md:col-span-2 space-y-2">
               <label htmlFor="address" className="block text-sm font-medium text-foreground">
-                Alamat Pengiriman <span className="text-red-500">*</span>
+                Catatan Pemesanan
               </label>
               <textarea
                 id="address"
@@ -207,8 +207,7 @@ export default function Checkout() {
                 className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
                   errors.address ? "border-red-500" : ""
                 }`}
-                placeholder="Alamat, kota/kabupaten, provinsi, kode pos"
-                required
+                placeholder="Catatan tambahan untuk pesanan Anda (opsional)"
               ></textarea>
               {errors.address && (
                 <p className="text-xs text-red-600">{errors.address[0]}</p>

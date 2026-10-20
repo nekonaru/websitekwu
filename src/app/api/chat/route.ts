@@ -58,7 +58,7 @@ export async function POST(req: Request) {
           "Anda dapat menghubungi admin KWU melalui halaman Kontak atau tombol 'Hubungi admin' di chat ini.";
       } else {
         reply =
-          "Saya Asisten KWU. Saya bisa membantu tentang produk, cara pemesanan, pengiriman, dan layanan B2B. Silakan tanyakan atau pilih quick reply.";
+          "Saya Asisten KWU. Saya bisa membantu tentang produk, cara pemesanan, pengambilan barang di toko, dan layanan B2B. Silakan tanyakan atau pilih quick reply.";
       }
     } else {
       // Panggil provider AI dari backend (diimplementasikan sesuai konfigurasi)

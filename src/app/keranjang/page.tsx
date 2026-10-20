@@ -126,19 +126,15 @@ export default function Keranjang() {
           </div>
 
           <div className="border-t border-border p-6 bg-neutral-50">
-            <div className="flex justify-between mb-4">
+            <div className="flex justify-between mb-6">
               <span className="text-sm text-neutral-600">Subtotal</span>
               <span className="text-sm font-medium text-foreground">
                 {formatRupiah(subtotal)}
               </span>
             </div>
-            <div className="flex justify-between mb-6">
-              <span className="text-sm text-neutral-600">Biaya pengiriman</span>
-              <span className="text-sm font-medium text-foreground">Gratis</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold text-foreground pt-4 border-t border-border">
+            <div className="flex justify-between mb-6 text-sm text-muted">
               <span>Total</span>
-              <span>{formatRupiah(subtotal)}</span>
+              <span className="font-bold text-foreground">{formatRupiah(subtotal)}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">

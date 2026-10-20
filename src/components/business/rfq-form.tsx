@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { z, ZodError } from "zod";
-import { Plus, Minus, Mail, Building2, MapPin, Trash2 } from "lucide-react";
+import { Plus, Minus, Mail, Building2, Trash2 } from "lucide-react";
 import type { CreateRfqInput } from "@/types/rfq";
 
 // Skema validasi RFQ (frontend; backend juga divalidasi terpisah)
@@ -17,7 +17,7 @@ const rfqFormSchema = z.object({
   organizationName: z.string().trim().min(2, "Minimal 2 karakter").max(150),
   contactName: z.string().trim().min(2, "Minimal 2 karakter").max(100),
   businessEmail: z.string().email("Format email tidak valid").toLowerCase().max(254),
-  deliveryLocation: z.string().trim().min(5, "Minimal 5 karakter").max(500),
+  deliveryLocation: z.string().trim().max(500).optional().default("-"),
   requiredDate: z.string().refine((d) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -40,7 +40,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
     organizationName: "",
     contactName: "",
     businessEmail: "",
-    deliveryLocation: "",
+    deliveryLocation: "-",
     requiredDate: "",
     items: [{ productName: "", productDetails: "", quantity: 1, unit: "pcs" }],
   });
@@ -198,8 +198,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
 
       {/* Detail kebutuhan grosir */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="text-lg font-bold text-foreground">
           Detail Kebutuhan Grosir
         </h2>
         <div className="space-y-3">
@@ -357,27 +356,6 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
             />
             {hasSubmitted && errors.requiredDate && (
               <p className="text-xs text-red-600">{errors.requiredDate[0]}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Lokasi Pengiriman <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-4 w-4 text-neutral-400" aria-hidden="true" />
-              <input
-                name="deliveryLocation"
-                value={form.deliveryLocation}
-                onChange={(e) => updateTopField("deliveryLocation", e.target.value)}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.deliveryLocation ? "border-red-500" : ""
-                }`}
-                placeholder="Alamat, kota/kabupaten, provinsi, kode pos"
-                required
-              />
-            </div>
-            {hasSubmitted && errors.deliveryLocation && (
-              <p className="text-xs text-red-600">{errors.deliveryLocation[0]}</p>
             )}
           </div>
         </div>

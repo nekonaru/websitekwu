@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Warna utama KWU (design tokens) */
+  /* Warna utama KWU (design tokens) - kontras tinggi & armonik */
   --color-orange-50: #FFF7ED;
   --color-orange-100: #FFEDD5;
   --color-orange-500: #F97316;
@@ -19,8 +19,13 @@
   --color-primary-hover: var(--color-orange-500);
   --color-secondary: var(--color-blue-600);
   --color-surface: #ffffff;
-  --color-surface-muted: #F9FAFB;
-  --color-border: #E5E7EB;
+  --color-surface-muted: #F8FAFC;
+  --color-border: #E2E8F0;
+
+  /* Warna teks dengan kontras tinggi (WCAG AA) */
+  --color-heading: #0F172A;
+  --color-body: #334155;
+  --color-muted: #64748B;
 
   --color-font-sans: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);
@@ -28,23 +33,78 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #111827;
+  --foreground: #0F172A;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0b0f19;
-    --foreground: #f9fafb;
+    --foreground: #f8fafc;
   }
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--color-body);
   font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, sans-serif;
   margin: 0;
+  line-height: 1.6;
 }
+
+/* ===== ANIMASI ===== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(234, 88, 12, 0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+/* Delay varian untuk stagger */
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
 
 /* Fokus indikator jelas untuk navigasi keyboard (aksesibilitas) */
 :focus-visible {
@@ -74,4 +134,20 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Utilitas kontras teks */
+.text-heading { color: var(--color-heading); }
+.text-body { color: var(--color-body); }
+.text-muted { color: var(--color-muted); }
+
+/* Gambar placeholder dengan latar warna KWU */
+.img-placeholder {
+  background: linear-gradient(135deg, var(--color-orange-100), var(--color-blue-100));
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

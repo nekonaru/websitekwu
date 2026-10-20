@@ -19,7 +19,7 @@ export const createRfqSchema = z.object({
   organizationName: z.string().trim().min(2).max(150),
   contactName: z.string().trim().min(2).max(100),
   businessEmail: z.string().email().toLowerCase().max(254),
-  deliveryLocation: z.string().trim().min(5).max(500),
+  deliveryLocation: z.string().trim().max(500).optional().default("-"),
   requiredDate: z.string().refine((d) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
