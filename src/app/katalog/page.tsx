@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { formatRupiah } from "@/lib/format";
 import type { Product } from "@/services/product.service";
 
@@ -52,19 +53,14 @@ function ProductCard({ product }: ProductCardProps) {
   );
 }
 
-export default async function Katalog({
-  searchParams,
-}: {
-  searchParams: { category?: string; q?: string; page?: string };
-}) {
+export default function Katalog() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState(
-    searchParams.category ?? ""
-  );
-  const [query, setQuery] = useState(searchParams.q ?? "");
-  const [page, setPage] = useState(Math.max(parseInt(searchParams.page ?? "1", 10), 1));
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") ?? "");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const [page, setPage] = useState(Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1));
   const [filterOpen, setFilterOpen] = useState(false);
 
   const PAGE_SIZE = 9;
@@ -91,11 +87,7 @@ export default async function Katalog({
         products = data.success ? data.data : [];
       }
 
-      const catRes = await fetch("/api/products"); // Kategori diambil dari semua produk untuk fallback
-      // Kategori unik dari produk
-      const uniqueCategories = [...new Set(products.map((p) => p.category))].map(
-        (cat) => ({ name: cat, slug: cat })
-      );
+      const uniqueCategories = [...new Set(products.map((p) => p.category))];
       setCategories(uniqueCategories);
       setProducts(products);
     } catch (err) {
@@ -107,10 +99,7 @@ export default async function Katalog({
 
   const totalPages = Math.max(Math.ceil(products.length / PAGE_SIZE), 1);
   const currentPage = Math.min(page, totalPages);
-  const paginated = products.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const paginated = products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handlePrev = () => {
     if (currentPage > 1) setPage(currentPage - 1);
@@ -122,7 +111,6 @@ export default async function Katalog({
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar filter */}
         <aside
           className={`lg:w-64 lg:flex-shrink-0 ${
             filterOpen
@@ -147,26 +135,22 @@ export default async function Katalog({
                 <button
                   onClick={() => setCategoryFilter("")}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    !categoryFilter
-                      ? "bg-primary text-white"
-                      : "text-heading hover:bg-neutral-100"
+                    !categoryFilter ? "bg-primary text-white" : "text-heading hover:bg-neutral-100"
                   }`}
                 >
                   Semua Kategori
                 </button>
                 {categories.map((cat) => (
                   <button
-                    key={cat.slug}
-                    onClick={() => setCategoryFilter(cat.slug)}
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      categoryFilter === cat.slug
-                        ? "bg-primary text-white"
-                        : "text-heading hover:bg-neutral-100"
+                      categoryFilter === cat ? "bg-primary text-white" : "text-heading hover:bg-neutral-100"
                     }`}
                   >
-                    {cat.name}
+                    {cat}
                   </button>
-                ))}
+                )}
               </div>
             </div>
             <div>
@@ -201,7 +185,6 @@ export default async function Katalog({
           </div>
         </aside>
 
-        {/* Konten utama */}
         <div className="flex-1">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
@@ -218,7 +201,6 @@ export default async function Katalog({
             </button>
           </div>
 
-          {/* Pencarian */}
           <div className="relative mb-6 max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden="true" />
             <input
@@ -235,7 +217,6 @@ export default async function Katalog({
             />
           </div>
 
-          {/* Hasil */}
           <div className="flex items-center gap-2 text-sm text-muted mb-4">
             <span className="font-medium text-heading">
               {paginated.length} dari {products.length} produk
@@ -255,7 +236,6 @@ export default async function Katalog({
             )}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <nav className="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
               <button

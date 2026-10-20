@@ -1,48 +1,49 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import Image from "next/image";
 import { ShoppingCart, AlertCircle } from "lucide-react";
-import { getProductBySlug } from "@/services/product.service";
+import { useEffect, useState } from "react";
 import { formatRupiah } from "@/lib/format";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const product = await getProductBySlug({ slug: params.slug });
-  if (!product) return { title: "Produk Tidak Ditemukan" };
-  return {
-    title: product.name,
-    description: product.shortDescription,
-  };
-}
-
-export default async function ProductDetail({
+export default function ProductDetail({
   params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const product = await getProductBySlug({ slug });
+}: { params: Promise<{ slug: string }> }) {
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!product) notFound();
+  useEffect(() => {
+    async function load() {
+      const { slug } = await params;
+      try {
+        const res = await fetch(`/api/produk/${slug}`);
+        const data = await res.json();
+        setProduct(data.success ? data.data : null);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) return <div className="max-w-2xl mx-auto py-12 text-center">Memuat produk...</div>;
+  if (!product) return <div className="max-w-2xl mx-auto py-12 text-center">Produk tidak ditemukan.</div>;
 
   const inStock = product.stock > 0;
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumbs */}
-      <nav className="flex gap-1 mb-6 text-sm text-muted">
-        <Link href="/" className="hover-text-primary transition-colors">
-          Beranda
-        </Link>
+      <nav className="flex gap-1 mb-6 text-sm text-neutral-600">
+        <Link href="/" className="hover:text-primary transition-colors">Beranda</Link>
         <span className="text-neutral-400">/</span>
-        <Link href="/katalog" className="hover-text-primary transition-colors">
-          Katalog
-        </Link>
+        <Link href="/katalog" className="hover:text-primary transition-colors">Katalog</Link>
         <span className="text-neutral-400">/</span>
         <span className="text-heading">{product.name}</span>
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Gambar produk */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-xl border border-border bg-neutral-50 relative">
             <Image
@@ -60,40 +61,25 @@ export default async function ProductDetail({
               </span>
             )}
           </div>
-          <p className="text-xs text-muted text-center">
-            Gambar produk dari database KWU
-          </p>
+          <p className="text-xs text-muted text-center">Gambar produk dari database KWU</p>
         </div>
 
-        {/* Informasi & pembelian */}
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-heading">{product.name}</h1>
-            <p className="text-primary text-2xl font-bold mt-1">
-              {formatRupiah(product.price)}
-            </p>
+            <p className="text-primary text-2xl font-bold mt-1">{formatRupiah(product.price)}</p>
             <p className="mt-3 text-sm text-heading flex items-center gap-1">
-              {inStock ? (
-                <span className="text-green-600">Tersedia</span>
-              ) : (
-                <span className="text-orange-600">Stok Habis</span>
-              )}
+              {inStock ? <span className="text-green-600">Tersedia</span> : <span className="text-orange-600">Stok Habis</span>}
               <span className="text-neutral-400">•</span>
               <span>Stok: {product.stock}</span>
             </p>
           </div>
-
           <div>
             <h2 className="font-bold text-heading mb-3">Deskripsi</h2>
-            <p className="text-body leading-relaxed">
-              {product.description}
-            </p>
+            <p className="text-body leading-relaxed">{product.description}</p>
           </div>
-
           <div className="space-y-4">
-            <label htmlFor="quantity" className="font-medium text-heading">
-              Jumlah
-            </label>
+            <label htmlFor="quantity" className="font-medium text-heading">Jumlah</label>
             <input
               id="quantity"
               type="number"
@@ -101,22 +87,13 @@ export default async function ProductDetail({
               max={inStock ? product.stock : 0}
               defaultValue={1}
               disabled={!inStock}
-              className={`w-full pl-3 pr-4 py-3 border rounded-lg text-heading ${
-                !inStock
-                  ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                  : "focus:outline-none focus:ring-2 focus:ring-primary"
-              }`}
+              className={`w-full pl-3 pr-4 py-3 border rounded-lg text-heading ${!inStock ? "bg-neutral-100 text-neutral-400 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-primary"}`}
               aria-label="Jumlah produk"
             />
           </div>
-
           <button
             disabled={!inStock}
-            className={`w-full py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 transition-all ${
-              inStock
-                ? "bg-primary text-white hover:bg-orange-500 shadow-lg shadow-orange-500/25"
-                : "border border-neutral-200 text-neutral-400 bg-neutral-50 cursor-not-allowed"
-            }`}
+            className={`w-full py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 transition-all ${inStock ? "bg-primary text-white hover:bg-orange-500 shadow-lg shadow-orange-500/25" : "border border-neutral-200 text-neutral-400 bg-neutral-50 cursor-not-allowed"}`}
           >
             {inStock ? (
               <>
@@ -127,24 +104,13 @@ export default async function ProductDetail({
               "Stok Habis"
             )}
           </button>
-
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
             <p className="text-sm text-blue-900">
               <AlertCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-              Data ini berasal dari <strong>database KWU</strong> (Supabase).
-              Jika belum dikonfigurasi, data contoh akan ditampilkan.
+              Data ini berasal dari <strong>database KWU</strong> (Supabase). Jika belum dikonfigurasi, data contoh akan ditampilkan.
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-12 flex items-center gap-3 text-sm">
-        <Link
-          href="/katalog"
-          className="text-primary hover:underline"
-        >
-          ← Kembali ke katalog
-        </Link>
       </div>
     </section>
   );
