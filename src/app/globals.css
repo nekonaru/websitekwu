@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warna utama KWU (design tokens) */
+  --color-orange-50: #FFF7ED;
+  --color-orange-100: #FFEDD5;
+  --color-orange-500: #F97316;
+  --color-orange-600: #EA580C;
+  --color-orange-900: #7C2D12;
+
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #DBEAFE;
+  --color-blue-500: #3B82F6;
+  --color-blue-600: #2563EB;
+  --color-blue-900: #1E3A8A;
+
+  /* Semantik warna UI */
+  --color-primary: var(--color-orange-600);
+  --color-primary-hover: var(--color-orange-500);
+  --color-secondary: var(--color-blue-600);
+  --color-surface: #ffffff;
+  --color-surface-muted: #F9FAFB;
+  --color-border: #E5E7EB;
+
+  --color-font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0f19;
+    --foreground: #f9fafb;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, sans-serif;
+  margin: 0;
+}
+
+/* Fokus indikator jelas untuk navigasi keyboard (aksesibilitas) */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Kurangi gerakan jika pengguna memilikinya */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
