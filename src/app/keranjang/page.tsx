@@ -21,37 +21,35 @@ export default function Keranjang() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-foreground mb-6">Keranjang Belanja</h1>
+      <h1 className="text-2xl font-bold text-heading mb-6">Keranjang Belanja</h1>
 
       {itemCount === 0 ? (
         <div className="bg-neutral-50 border border-border rounded-xl p-12 text-center">
-          <p className="text-neutral-600 mb-4">Keranjang Anda masih kosong.</p>
+          <p className="text-muted mb-4">Keranjang Anda masih kosong.</p>
           <Link
             href="/katalog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
           >
             Belanja Sekarang
           </Link>
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-xl">
+        <div className="bg-white border border-border rounded-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border bg-neutral-50">
-                  <th className="px-6 py-3 text-sm font-semibold text-neutral-600">
-                    Produk
-                  </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-neutral-600 text-right">
+                  <th className="px-6 py-3 text-sm font-semibold text-muted">Produk</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
                     Harga Satuan
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-neutral-600 text-center">
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-center">
                     Jumlah
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-neutral-600 text-right">
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-neutral-600 text-right">
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
                     Aksi
                   </th>
                 </tr>
@@ -59,7 +57,7 @@ export default function Keranjang() {
               <tbody>
                 {items.map((item) => (
                   <tr key={item.product.id} className="border-b border-border last:border-0">
-                    <td className="px-6 py-4 text-sm text-foreground">
+                    <td className="px-6 py-4 text-sm text-heading">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden">
                           <Image
@@ -72,8 +70,10 @@ export default function Keranjang() {
                           />
                         </div>
                         <div>
-                          <div className="font-medium">{item.product.name}</div>
-                          <div className="text-xs text-neutral-500">
+                          <div className="font-medium text-heading truncate">
+                            {item.product.name}
+                          </div>
+                          <div className="text-xs text-muted truncate">
                             {item.product.slug}
                           </div>
                         </div>
@@ -127,20 +127,24 @@ export default function Keranjang() {
 
           <div className="border-t border-border p-6 bg-neutral-50">
             <div className="flex justify-between mb-6">
-              <span className="text-sm text-neutral-600">Subtotal</span>
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm text-muted">Subtotal</span>
+              <span className="text-sm font-medium text-heading">
                 {formatRupiah(subtotal)}
               </span>
             </div>
             <div className="flex justify-between mb-6 text-sm text-muted">
+              <span>Pengambilan barang</span>
+              <span>Diambil sendiri di toko KWU</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-heading pt-4 border-t border-border">
               <span>Total</span>
-              <span className="font-bold text-foreground">{formatRupiah(subtotal)}</span>
+              <span className="font-bold">{formatRupiah(subtotal)}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Link
                 href="/checkout"
-                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl bg-primary text-white font-semibold text-center hover:bg-orange-500 transition-colors"
+                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl bg-primary text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-md shadow-orange-200"
               >
                 Lanjutkan Checkout
               </Link>
@@ -150,7 +154,7 @@ export default function Keranjang() {
                     clear();
                   }
                 }}
-                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl border border-border text-foreground font-semibold text-center hover:bg-neutral-100 transition-colors"
+                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl border border-border text-heading font-semibold text-center hover:bg-neutral-100 transition-colors"
               >
                 Kosongkan
               </button>

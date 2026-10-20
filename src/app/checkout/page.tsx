@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useCart } from "@/contexts/cart-context";
 import { formatRupiah } from "@/lib/format";
 import { z } from "zod";
@@ -12,8 +11,7 @@ const checkoutSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter").max(150),
   email: z.string().email("Format email tidak valid").max(254),
   phone: z.string().trim().min(8, "Nomor telepon minimal 8 angka").max(20),
-  address: z.string().trim().min(5, "Alamat minimal 5 karakter").max(500),
-  notes: z.string().max(1000),
+  notes: z.string().max(1000).optional(),
 });
 
 export default function Checkout() {
@@ -22,7 +20,6 @@ export default function Checkout() {
     name: "",
     email: "",
     phone: "",
-    address: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -72,7 +69,7 @@ export default function Checkout() {
           customerName: form.name,
           customerEmail: form.email,
           customerPhone: form.phone,
-          deliveryAddress: form.address,
+          deliveryAddress: "Diambil sendiri di toko KWU",
           notes: form.notes,
           items: items.map((i) => ({
             productId: i.product.id,
@@ -92,9 +89,11 @@ export default function Checkout() {
         text: `Pesanan ${data.data.orderNumber} berhasil dibuat.`,
       });
       clear();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Gagal membuat pesanan. Coba lagi.";
-      setMessage({ type: "error", text: message });
+    } catch (err: any) {
+      setMessage({
+        type: "error",
+        text: err?.message ?? "Gagal membuat pesanan. Coba lagi.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -111,11 +110,11 @@ export default function Checkout() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-foreground mb-6">Checkout</h1>
+      <h1 className="text-2xl font-bold text-heading mb-6">Checkout</h1>
 
       {message && (
         <div
-          className={`p-4 rounded-lg ${
+          className={`p-4 rounded-xl ${
             message.type === "success"
               ? "bg-green-50 border border-green-200 text-green-800"
               : "bg-red-50 border border-red-200 text-red-800"
@@ -128,10 +127,10 @@ export default function Checkout() {
       {itemCount === 0 && (
         <div className="bg-neutral-50 border border-border rounded-xl p-12 text-center">
           <AlertCircle className="h-6 w-6 text-neutral-400 mx-auto mb-3" aria-hidden="true" />
-          <p className="text-neutral-600">Keranjang Anda kosong.</p>
+          <p className="text-muted">Keranjang Anda kosong.</p>
           <Link
             href="/katalog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors mt-4 inline-block"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors mt-4 inline-block"
           >
             Belanja Sekarang
           </Link>
@@ -139,10 +138,11 @@ export default function Checkout() {
       )}
 
       {itemCount > 0 && (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-surface border border-border rounded-xl p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-border rounded-xl p-6 md:p-8">
+          <h2 className="font-bold text-heading mb-4">Informasi Pemesan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium text-foreground">
+              <label htmlFor="name" className="block text-sm font-medium text-heading">
                 Nama Lengkap <span className="text-red-500">*</span>
               </label>
               <input
@@ -150,7 +150,7 @@ export default function Checkout() {
                 type="text"
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
                   errors.name ? "border-red-500" : ""
                 }`}
                 required
@@ -160,7 +160,7 @@ export default function Checkout() {
               )}
             </div>
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
+              <label htmlFor="email" className="block text-sm font-medium text-heading">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -168,7 +168,7 @@ export default function Checkout() {
                 type="email"
                 value={form.email}
                 onChange={(e) => updateField("email", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
                   errors.email ? "border-red-500" : ""
                 }`}
                 required
@@ -178,7 +178,7 @@ export default function Checkout() {
               )}
             </div>
             <div className="space-y-2">
-              <label htmlFor="phone" className="block text-sm font-medium text-foreground">
+              <label htmlFor="phone" className="block text-sm font-medium text-heading">
                 Nomor Telepon <span className="text-red-500">*</span>
               </label>
               <input
@@ -186,7 +186,7 @@ export default function Checkout() {
                 type="tel"
                 value={form.phone}
                 onChange={(e) => updateField("phone", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
                   errors.phone ? "border-red-500" : ""
                 }`}
                 required
@@ -196,25 +196,7 @@ export default function Checkout() {
               )}
             </div>
             <div className="md:col-span-2 space-y-2">
-              <label htmlFor="address" className="block text-sm font-medium text-foreground">
-                Catatan Pemesanan
-              </label>
-              <textarea
-                id="address"
-                rows={3}
-                value={form.address}
-                onChange={(e) => updateField("address", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.address ? "border-red-500" : ""
-                }`}
-                placeholder="Catatan tambahan untuk pesanan Anda (opsional)"
-              ></textarea>
-              {errors.address && (
-                <p className="text-xs text-red-600">{errors.address[0]}</p>
-              )}
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label htmlFor="notes" className="block text-sm font-medium text-foreground">
+              <label htmlFor="notes" className="block text-sm font-medium text-heading">
                 Catatan Pesanan
               </label>
               <textarea
@@ -222,20 +204,17 @@ export default function Checkout() {
                 rows={3}
                 value={form.notes}
                 onChange={(e) => updateField("notes", e.target.value)}
-                className="w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Catatan tambahan untuk admin (opsional)"
               ></textarea>
             </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
-            <h2 className="font-semibold text-foreground mb-4">Ringkasan Pesanan</h2>
+            <h2 className="font-bold text-heading mb-4">Ringkasan Pesanan</h2>
             <div className="space-y-3 mb-6">
               {items.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="flex items-center justify-between text-sm"
-                >
+                <div key={item.product.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0">
                       <Image
@@ -248,10 +227,10 @@ export default function Checkout() {
                       />
                     </div>
                     <div>
-                      <div className="font-medium text-foreground">
+                      <div className="font-medium text-heading">
                         {item.product.name}
                       </div>
-                      <div className="text-xs text-neutral-500">
+                      <div className="text-xs text-muted">
                         {item.quantity} × {formatRupiah(item.product.price)}
                       </div>
                     </div>
@@ -262,7 +241,7 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
-            <div className="flex justify-between text-lg font-bold text-foreground pt-4 border-t border-border">
+            <div className="flex justify-between text-lg font-bold text-heading pt-4 border-t border-border">
               <span>Total</span>
               <span>{formatRupiah(subtotal)}</span>
             </div>
@@ -271,17 +250,19 @@ export default function Checkout() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-4 rounded-xl bg-primary text-white text-lg font-semibold hover:bg-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-orange-500/25"
+            className="w-full py-4 rounded-xl bg-primary text-white text-lg font-bold hover:bg-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-orange-500/25"
           >
             {submitting ? "Membuat pesanan..." : "Buat Pesanan"}
           </button>
 
-          <p className="text-sm text-neutral-600 text-center mt-4">
-            Data ini adalah contoh untuk pengembangan. Pesanan akan diproses
-            oleh admin KWU setelah terhubung ke database.
+          <p className="text-sm text-muted text-center mt-4">
+            Pesanan akan diproses oleh admin KWU. Barang dapat diambil langsung
+            di toko setelah konfirmasi.
           </p>
         </form>
       )}
     </section>
   );
 }
+
+import Image from "next/image";
