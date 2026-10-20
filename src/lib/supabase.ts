@@ -45,6 +45,8 @@ export function createBrowserSupabaseClient() {
  * berdasarkan sesi pengguna (anon key + cookie).
  *
  * Next.js 15 membuat cookies() menjadi async (Promise).
+ * Jika env vars belum di-set (belum dikonfigurasi), tetap mengembalikan klien
+ * agar build tidak gagal; operasi data akan gagal runtime saat dipanggil.
  */
 export async function createServerSupabaseClient(cookies: any) {
   const cookieStore = await cookies;
@@ -61,11 +63,6 @@ export async function createServerSupabaseClient(cookies: any) {
  * Tidak pernah diekspor ke bundle browser.
  */
 export function createServiceSupabaseClient() {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY tidak dikonfigurasi. Variabel ini hanya boleh ada di server."
-    );
-  }
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
