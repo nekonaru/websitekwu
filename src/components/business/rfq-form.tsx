@@ -47,6 +47,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const addItem = () => {
     if (form.items.length >= 20) return;
@@ -85,6 +86,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError(null);
+    setHasSubmitted(true);
 
     try {
       rfqFormSchema.parse(form);
@@ -149,7 +151,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
               }`}
               required
             />
-            {errors.organizationName && (
+            {hasSubmitted && errors.organizationName && (
               <p className="text-xs text-red-600">{errors.organizationName[0]}</p>
             )}
           </div>
@@ -166,7 +168,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
               }`}
               required
             />
-            {errors.contactName && (
+            {hasSubmitted && errors.contactName && (
               <p className="text-xs text-red-600">{errors.contactName[0]}</p>
             )}
           </div>
@@ -187,7 +189,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                 required
               />
             </div>
-            {errors.businessEmail && (
+            {hasSubmitted && errors.businessEmail && (
               <p className="text-xs text-red-600">{errors.businessEmail[0]}</p>
             )}
           </div>
@@ -235,7 +237,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                     placeholder="Contoh: Buku Tulis A5"
                     required
                   />
-                  {errors[`items_${index}_productName`] && (
+                  {hasSubmitted && errors[`items_${index}_productName`] && (
                     <p className="text-xs text-red-600">
                       {errors[`items_${index}_productName`][0]}
                     </p>
@@ -258,7 +260,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                       </option>
                     ))}
                   </select>
-                  {errors[`items_${index}_unit`] && (
+                  {hasSubmitted && errors[`items_${index}_unit`] && (
                     <p className="text-xs text-red-600">{errors[`items_${index}_unit`][0]}</p>
                   )}
                 </div>
@@ -277,7 +279,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                   placeholder="Spesifikasi, varian, atau kebutuhan khusus"
                   required
                 ></textarea>
-                {errors[`items_${index}_productDetails`] && (
+                {hasSubmitted && errors[`items_${index}_productDetails`] && (
                   <p className="text-xs text-red-600">
                     {errors[`items_${index}_productDetails`][0]}
                   </p>
@@ -320,7 +322,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                     <Plus className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
-                {errors[`items_${index}_quantity`] && (
+                {hasSubmitted && errors[`items_${index}_quantity`] && (
                   <p className="text-xs text-red-600">
                     {errors[`items_${index}_quantity`][0]}
                   </p>
@@ -353,7 +355,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
               }`}
               required
             />
-            {errors.requiredDate && (
+            {hasSubmitted && errors.requiredDate && (
               <p className="text-xs text-red-600">{errors.requiredDate[0]}</p>
             )}
           </div>
@@ -374,7 +376,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                 required
               />
             </div>
-            {errors.deliveryLocation && (
+            {hasSubmitted && errors.deliveryLocation && (
               <p className="text-xs text-red-600">{errors.deliveryLocation[0]}</p>
             )}
           </div>
