@@ -152,7 +152,7 @@ export async function getCategories({
   }
 
   const supabase = cookies
-    ? createServerSupabaseClient(cookies)
+    ? await createServerSupabaseClient(cookies())
     : createBrowserSupabaseClient();
 
   const { data, error } = await supabase
@@ -188,7 +188,7 @@ export async function getPublishedProducts({
   }
 
   const supabase = cookies
-    ? createServerSupabaseClient(cookies)
+    ? await createServerSupabaseClient(cookies())
     : createBrowserSupabaseClient();
 
   const { data, error } = await supabase
@@ -245,7 +245,7 @@ export async function getProductBySlug({
   }
 
   const supabase = cookies
-    ? createServerSupabaseClient(cookies)
+    ? await createServerSupabaseClient(cookies())
     : createBrowserSupabaseClient();
 
   const { data, error } = await supabase
@@ -297,7 +297,7 @@ export async function searchProducts({
   }
 
   const supabase = cookies
-    ? createServerSupabaseClient(cookies)
+    ? await createServerSupabaseClient(cookies())
     : createBrowserSupabaseClient();
 
   const { data, error } = await supabase
@@ -346,7 +346,7 @@ export async function getProductsByCategory({
   }
 
   const supabase = cookies
-    ? createServerSupabaseClient(cookies)
+    ? await createServerSupabaseClient(cookies())
     : createBrowserSupabaseClient();
 
   const { data, error } = await supabase

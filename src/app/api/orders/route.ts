@@ -4,8 +4,9 @@
  * Membutuhkan autentikasi (user_id dari session).
  */
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 const orderItemSchema = z.object({
   productId: z.string().optional(),
@@ -26,7 +27,7 @@ const orderSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient(cookies());
     const body = await req.json();
 
     const parsed = orderSchema.safeParse(body);

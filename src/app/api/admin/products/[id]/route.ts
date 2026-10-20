@@ -4,6 +4,19 @@
  */
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import { z } from "zod";
+
+const productSchema = z.object({
+  name: z.string().min(2).max(200),
+  slug: z.string().min(2).max(200),
+  description: z.string().min(10),
+  shortDescription: z.string().max(500).optional(),
+  price: z.number().nonnegative(),
+  stock: z.number().int().nonnegative(),
+  category: z.string().min(1),
+  imageUrl: z.string().url().optional().nullable(),
+  isFeatured: z.boolean().default(false),
+});
 
 export async function GET(
   req: Request,
@@ -49,6 +62,63 @@ export async function GET(
     return NextResponse.json(
       { success: false, error: err.message ?? "Gagal memuat produk" },
       { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const parsed = productSchema.partial().safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.flatten() },
+        { status: 422 }
+      );
+    }
+
+    const { updateProductAdmin } = require("@/services/product.service");
+    const data = await updateProductAdmin(id, {
+      name: parsed.data.name,
+      slug: parsed.data.slug,
+      description: parsed.data.description,
+      shortDescription: parsed.data.shortDescription,
+      price: parsed.data.price,
+      stock: parsed.data.stock,
+      category: parsed.data.category,
+      imageUrl: parsed.data.imageUrl,
+      isFeatured: parsed.data.isFeatured,
+      isDraft: (parsed.data as any).isDraft ?? false,
+    });
+
+    return NextResponse.json({ success: true, data });
+  } catch (err: any) {
+    console.error("PATCH /api/admin/products/[id] error:", err);
+    return NextResponse.json(
+      { success: false, error: err.message ?? "Gagal memperbarui produk" },
+      { status: 400 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { deleteProductAdmin } = require("@/services/product.service");
+    await deleteProductAdmin(id);
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("DELETE /api/admin/products/[id] error:", err);
+    return NextResponse.json(
+      { success: false, error: err.message ?? "Gagal menghapus produk" },
+      { status: 400 }
     );
   }
 }

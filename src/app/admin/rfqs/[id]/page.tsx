@@ -117,7 +117,7 @@ export default async function AdminRfqDetail({
         terms: newQuotation.terms || undefined,
         items: items.map((i) => ({
           productName: i.productName,
-          quantity: parseInt(i.quantity, 10) || 1,
+          quantity: Number(i.quantity) || 1,
           unit: i.unit,
           unitPrice: parseFloat(i.unitPrice) || 0,
         })),
@@ -614,7 +614,7 @@ export default async function AdminRfqDetail({
                           setNewQuotation({
                             ...newQuotation,
                             items: newQuotation.items.map((it, i) =>
-                              i === idx ? { ...it, quantity: e.target.value } : it
+                              i === idx ? { ...it, quantity: Number(e.target.value) || 1 } : it
                             ),
                           })
                         }

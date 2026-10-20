@@ -7,6 +7,9 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase";
 import type { CookieMethodsServer } from "@supabase/ssr";
+import { getQuotationsByRfq as getQuotationsByRfqFromQuotation } from "@/services/quotation.service";
+
+export { getQuotationsByRfqFromQuotation as getQuotationsByRfq };
 
 export interface Rfq {
   id: string;
@@ -68,7 +71,7 @@ export async function getAllRfqsAdmin({
   page?: number;
   pageSize?: number;
 }): Promise<{ rfqs: Rfq[]; total: number }> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   // Cek otorisasi admin
   const {
@@ -140,7 +143,7 @@ export async function getRfqById({
   id: string;
   cookies: () => CookieMethodsServer;
 }): Promise<RfqWithItems | null> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   const {
     data: { user },
@@ -234,7 +237,7 @@ export async function updateRfqStatusAdmin({
   note?: string;
   cookies: () => CookieMethodsServer;
 }): Promise<{ oldStatus: string; newStatus: string }> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
   const serviceClient = createServiceSupabaseClient();
 
   // Cek otorisasi admin
@@ -317,7 +320,7 @@ export async function addAdminNote({
   note: string;
   cookies: () => CookieMethodsServer;
 }): Promise<void> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   // Cek otorisasi admin
   const {

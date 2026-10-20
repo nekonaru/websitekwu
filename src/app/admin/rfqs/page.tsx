@@ -114,8 +114,8 @@ export default function AdminRfqs() {
                 <th className="px-6 py-3 text-sm font-semibold text-muted">Nomor RFQ</th>
                 <th className="px-6 py-3 text-sm font-semibold text-muted">Perusahaan</th>
                 <th className="px-6 py-3 text-sm font-semibold text-muted">Kontak</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Pengajuan</td>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Kebutuhan</td>
+                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Pengajuan</th>
+                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Kebutuhan</th>
                 <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Status</th>
                 <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Aksi</th>
               </tr>

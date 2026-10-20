@@ -84,7 +84,7 @@ export async function createOrder({
   input: CreateOrderInput;
   cookies: () => CookieMethodsServer;
 }): Promise<{ orderNumber: string; status: string }> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   // Validasi input
   const parsed = orderSchema.safeParse(input);
@@ -174,7 +174,7 @@ export async function getMyOrders({
 }: {
   cookies: () => CookieMethodsServer;
 }): Promise<OrderWithItems[]> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   const {
     data: { user },
@@ -310,7 +310,7 @@ export async function getOrderById({
   id: string;
   cookies: () => CookieMethodsServer;
 }): Promise<OrderWithItems | null> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   const {
     data: { user },

@@ -3,11 +3,12 @@
  * Daftar pesanan milik pengguna yang terautentikasi.
  */
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase";
+import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient(cookies());
 
     const {
       data: { user },

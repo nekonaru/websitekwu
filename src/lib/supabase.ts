@@ -10,8 +10,14 @@ import {
   createBrowserClient,
   createServerClient,
   isBrowser,
-  type CookieMethodsServer,
 } from "@supabase/ssr";
+
+const emptyCookieStore: any = {
+  get: () => undefined,
+  set: () => {},
+  remove: () => {},
+  getAll: () => [],
+};
 
 /**
  * Buat klien Supabase untuk browser (Client Component).
@@ -23,7 +29,8 @@ export function createBrowserSupabaseClient() {
     // tanpa cookies (untuk data publik yang tidak butuh sesi).
     return createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: emptyCookieStore }
     );
   }
   return createBrowserClient(
@@ -36,12 +43,15 @@ export function createBrowserSupabaseClient() {
  * Buat klien Supabase di server dengan cookie store.
  * Digunakan untuk Route Handler / Server Action yang membutuhkan otorisasi
  * berdasarkan sesi pengguna (anon key + cookie).
+ *
+ * Next.js 15 membuat cookies() menjadi async (Promise).
  */
-export function createServerSupabaseClient(cookies: CookieMethodsServer) {
+export async function createServerSupabaseClient(cookies: any) {
+  const cookieStore = await cookies;
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies }
+    { cookies: cookieStore }
   );
 }
 
@@ -58,7 +68,8 @@ export function createServiceSupabaseClient() {
   }
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: emptyCookieStore }
   );
 }
 

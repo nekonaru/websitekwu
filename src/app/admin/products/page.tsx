@@ -64,7 +64,7 @@ export default function AdminProducts() {
         price: parseFloat(formData.price) || 0,
         stock: parseInt(formData.stock, 10) || 0,
         category: formData.category,
-        imageUrl: formData.imageUrl || undefined,
+        imageUrl: formData.imageUrl ?? "",
         isFeatured: formData.isFeatured,
       };
 
@@ -443,30 +443,4 @@ export default function AdminProducts() {
   );
 }
 
-async function updateProductAdmin(id: string, payload: any) {
-  const res = await fetch(`/api/admin/products/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Gagal memperbarui produk");
-  return res.json();
-}
 
-async function createProductAdmin(payload: any) {
-  const res = await fetch("/api/admin/products", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Gagal membuat produk");
-  return res.json();
-}
-
-async function deleteProductAdmin(id: string) {
-  const res = await fetch(`/api/admin/products/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Gagal menghapus produk");
-  return res.json();
-}

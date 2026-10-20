@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, User, SignOut, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, Lock, User, LogOut, ArrowRight } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/format";
 
@@ -92,7 +93,7 @@ export default function Profil() {
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3 overflow-hidden">
                 {(user.user_metadata?.full_name || user.email || "U")
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .join("")
                   .toUpperCase()}
               </div>
@@ -103,7 +104,7 @@ export default function Profil() {
               onClick={handleSignOut}
               className="w-full py-3 rounded-xl border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
             >
-              <SignOut className="h-4 w-4" /> Keluar
+              <LogOut className="h-4 w-4" /> Keluar
             </button>
           </div>
         </div>

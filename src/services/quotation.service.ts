@@ -89,7 +89,7 @@ export async function createQuotation({
   version: number;
   status: string;
 }> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
   const serviceClient = createServiceSupabaseClient();
 
   // Cek otorisasi admin
@@ -232,7 +232,7 @@ export async function getQuotationsByRfq({
   rfqId: string;
   cookies: () => CookieMethodsServer;
 }): Promise<QuotationWithItems[]> {
-  const supabase = createServerSupabaseClient(cookies);
+  const supabase = await createServerSupabaseClient(cookies());
 
   const { data, error } = await supabase
     .from("quotations")

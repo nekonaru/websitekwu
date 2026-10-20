@@ -3,12 +3,13 @@
  * Buat RFQ baru beserta item dalam satu transaksi atomik.
  */
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase";
 import { createRfqSchema } from "@/lib/validation/rfq";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient(cookies());
     const body = await req.json();
 
     const parsed = createRfqSchema.safeParse(body);
