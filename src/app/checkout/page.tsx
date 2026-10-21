@@ -216,7 +216,7 @@ export default function Checkout() {
               {items.map((item) => (
                 <div key={item.product.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="relative w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0">
                       <Image
                         src={item.product.image}
                         alt={item.product.name}

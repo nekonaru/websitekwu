@@ -1,10 +1,18 @@
 /**
- * Konteks keranjang belanja sederhana (client-side, localStorage).
- * Dalam implementasi penuh, keranjang disimpan di database terhubung auth.
+ * Konteks keranjang belanja (client-side, localStorage).
+ *
+ * Isi keranjang dibaca dari localStorage memakai useSyncExternalStore
+ * supaya hasil render di server dan di browser selalu sama.
  */
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 
 export interface CartItem {
   product: {
@@ -31,53 +39,102 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const STORAGE_KEY = "kwu_cart_v1";
+const EMPTY_ITEMS: CartItem[] = [];
 
-function loadCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
+/* ------------------------------------------------------------------ */
+/* Penyimpanan luar (localStorage)                                      */
+/* ------------------------------------------------------------------ */
+
+let items: CartItem[] = EMPTY_ITEMS;
+const listeners = new Set<() => void>();
+
+function readStorage(): CartItem[] {
+  if (typeof window === "undefined") return EMPTY_ITEMS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+    if (!raw) return EMPTY_ITEMS;
+    const parsed = JSON.parse(raw) as CartItem[];
+    return Array.isArray(parsed) ? parsed : EMPTY_ITEMS;
   } catch {
-    return [];
+    return EMPTY_ITEMS;
   }
 }
 
-function saveCart(items: CartItem[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function commit(next: CartItem[]) {
+  items = next;
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Penyimpanan penuh atau ditolak browser, abaikan saja.
+    }
+  }
+  listeners.forEach((listener) => listener());
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(loadCart);
+function subscribe(listener: () => void) {
+  listeners.add(listener);
 
-  useEffect(() => {
-    saveCart(items);
-  }, [items]);
+  // Saat pertama kali ada pendengar di browser, muat isi keranjang.
+  if (items === EMPTY_ITEMS) {
+    const stored = readStorage();
+    if (stored.length > 0) {
+      items = stored;
+    }
+  }
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): CartItem[] {
+  return items;
+}
+
+function getServerSnapshot(): CartItem[] {
+  return EMPTY_ITEMS;
+}
+
+/* ------------------------------------------------------------------ */
+/* Provider                                                            */
+/* ------------------------------------------------------------------ */
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const cartItems = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
 
   const addItem = useCallback(
     (product: CartItem["product"], quantity = 1) => {
-      setItems((prev) => {
-        const existing = prev.find((i) => i.product.id === product.id);
-        if (existing) {
-          return prev.map((i) =>
+      const existing = items.find((i) => i.product.id === product.id);
+      if (existing) {
+        commit(
+          items.map((i) =>
             i.product.id === product.id
               ? { ...i, quantity: Math.min(i.quantity + quantity, i.product.stock) }
               : i
-          );
-        }
-        return [...prev, { product, quantity: Math.min(quantity, product.stock) }];
-      });
+          )
+        );
+        return;
+      }
+      commit([
+        ...items,
+        { product, quantity: Math.min(quantity, product.stock) },
+      ]);
     },
     []
   );
 
   const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.product.id !== productId));
+    commit(items.filter((i) => i.product.id !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    setItems((prev) =>
-      prev.map((i) =>
+    commit(
+      items.map((i) =>
         i.product.id === productId
           ? { ...i, quantity: Math.max(0, Math.min(quantity, i.product.stock)) }
           : i
@@ -86,20 +143,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clear = useCallback(() => {
-    setItems([]);
+    commit(EMPTY_ITEMS);
   }, []);
 
-  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-  const subtotal = items.reduce(
-    (sum, i) => sum + i.product.price * i.quantity,
-    0
-  );
+  const value = useMemo<CartContextType>(() => {
+    const itemCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+    const subtotal = cartItems.reduce(
+      (sum, i) => sum + i.product.price * i.quantity,
+      0
+    );
 
-  return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clear, itemCount, subtotal }}>
-      {children}
-    </CartContext.Provider>
-  );
+    return {
+      items: cartItems,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clear,
+      itemCount,
+      subtotal,
+    };
+  }, [cartItems, addItem, removeItem, updateQuantity, clear]);
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

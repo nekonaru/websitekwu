@@ -59,7 +59,7 @@ export default function Keranjang() {
                   <tr key={item.product.id} className="border-b border-border last:border-0">
                     <td className="px-6 py-4 text-sm text-heading">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden">
+                        <div className="relative w-12 h-12 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden">
                           <Image
                             src={item.product.image}
                             alt={item.product.name}
