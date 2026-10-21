@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/contexts/cart-context";
 import { formatRupiah, getErrorMessage } from "@/lib/format";
 import { z } from "zod";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ShoppingCart,
+} from "lucide-react";
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter").max(150),
@@ -13,6 +20,11 @@ const checkoutSchema = z.object({
   phone: z.string().trim().min(8, "Nomor telepon minimal 8 angka").max(20),
   notes: z.string().max(1000).optional(),
 });
+
+type FieldName = "name" | "email" | "phone" | "notes";
+
+const KELAS_INPUT =
+  "w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-orange-100";
 
 export default function Checkout() {
   const { items, subtotal, itemCount, clear } = useCart();
@@ -24,18 +36,22 @@ export default function Checkout() {
   });
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
-  const updateField = (field: string, value: string) => {
+  function updateField(field: FieldName, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => {
       const next = { ...prev };
       delete next[field];
       return next;
     });
-  };
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
 
@@ -84,6 +100,7 @@ export default function Checkout() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Gagal membuat pesanan");
 
+      setOrderNumber(data.data.orderNumber);
       setMessage({
         type: "success",
         text: `Pesanan ${data.data.orderNumber} berhasil dibuat.`,
@@ -97,172 +114,292 @@ export default function Checkout() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }
+
+  const kelasInput = (field: FieldName) =>
+    `${KELAS_INPUT} ${
+      errors[field]
+        ? "border-danger-500 focus:border-danger-500 focus:ring-red-100"
+        : "border-border focus:border-primary"
+    }`;
 
   return (
-    <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-2 mb-6">
+    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-6">
         <Link
           href="/keranjang"
-          className="text-sm text-primary hover:underline flex items-center gap-2"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover"
         >
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Kembali ke Keranjang
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Kembali ke
+          Keranjang
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-heading mb-6">Checkout</h1>
+      <h1 className="mb-2 text-2xl font-bold text-heading md:text-3xl">Checkout</h1>
+      <p className="mb-8 text-muted">
+        Lengkapi data pemesan untuk menyelesaikan pesanan Anda.
+      </p>
 
       {message && (
         <div
-          className={`p-4 rounded-xl ${
+          role="status"
+          className={`mb-6 flex items-start gap-3 rounded-2xl border p-4 text-sm ${
             message.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-800"
-              : "bg-red-50 border border-red-200 text-red-800"
-          } mb-6`}
+              ? "border-success-100 bg-success-50 text-success-800"
+              : "border-danger-100 bg-danger-50 text-danger-800"
+          }`}
         >
-          {message.text}
+          {message.type === "success" ? (
+            <CheckCircle2
+              className="mt-0.5 h-5 w-5 shrink-0"
+              aria-hidden="true"
+            />
+          ) : (
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          )}
+          <div>
+            <p className="font-semibold">{message.text}</p>
+            {orderNumber && (
+              <Link
+                href="/pesanan-saya"
+                className="mt-2 inline-block font-semibold underline underline-offset-4"
+              >
+                Lihat riwayat pesanan
+              </Link>
+            )}
+          </div>
         </div>
       )}
 
-      {itemCount === 0 && (
-        <div className="bg-neutral-50 border border-border rounded-xl p-12 text-center">
-          <AlertCircle className="h-6 w-6 text-neutral-400 mx-auto mb-3" aria-hidden="true" />
-          <p className="text-muted">Keranjang Anda kosong.</p>
+      {itemCount === 0 ? (
+        <div className="rounded-2xl border border-border bg-surface px-6 py-16 text-center">
+          <ShoppingCart
+            className="mx-auto mb-4 h-10 w-10 text-muted"
+            aria-hidden="true"
+          />
+          <h2 className="mb-2 text-lg font-bold text-heading">
+            Keranjang Anda kosong
+          </h2>
+          <p className="mb-6 text-sm text-muted">
+            Pilih produk yang Anda butuhkan sebelum melanjutkan ke checkout.
+          </p>
           <Link
             href="/katalog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors mt-4 inline-block"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-primary-hover"
           >
             Belanja Sekarang
           </Link>
         </div>
-      )}
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start lg:gap-8">
+          {/* Formulir */}
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-6 rounded-2xl border border-border bg-white p-5 shadow-soft sm:p-7"
+          >
+            <fieldset>
+              <legend className="mb-4 text-lg font-bold text-heading">
+                Informasi Pemesan
+              </legend>
 
-      {itemCount > 0 && (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-border rounded-xl p-6 md:p-8">
-          <h2 className="font-bold text-heading mb-4">Informasi Pemesan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium text-heading">
-                Nama Lengkap <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={form.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.name ? "border-red-500" : ""
-                }`}
-                required
-              />
-              {errors.name && (
-                <p className="text-xs text-red-600">{errors.name[0]}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-heading">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => updateField("email", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.email ? "border-red-500" : ""
-                }`}
-                required
-              />
-              {errors.email && (
-                <p className="text-xs text-red-600">{errors.email[0]}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="phone" className="block text-sm font-medium text-heading">
-                Nomor Telepon <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-                className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.phone ? "border-red-500" : ""
-                }`}
-                required
-              />
-              {errors.phone && (
-                <p className="text-xs text-red-600">{errors.phone[0]}</p>
-              )}
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label htmlFor="notes" className="block text-sm font-medium text-heading">
-                Catatan Pesanan
-              </label>
-              <textarea
-                id="notes"
-                rows={3}
-                value={form.notes}
-                onChange={(e) => updateField("notes", e.target.value)}
-                className="w-full pl-3 pr-4 py-2.5 border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Catatan tambahan untuk admin (opsional)"
-              ></textarea>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Bidang
+                  id="name"
+                  label="Nama Lengkap"
+                  wajib
+                  error={errors.name?.[0]}
+                  value={form.name}
+                  onChange={(v) => updateField("name", v)}
+                  className={kelasInput("name")}
+                  autoComplete="name"
+                  placeholder="Nama sesuai identitas"
+                />
+                <Bidang
+                  id="email"
+                  label="Email"
+                  wajib
+                  type="email"
+                  error={errors.email?.[0]}
+                  value={form.email}
+                  onChange={(v) => updateField("email", v)}
+                  className={kelasInput("email")}
+                  autoComplete="email"
+                  placeholder="nama@contoh.com"
+                />
+                <Bidang
+                  id="phone"
+                  label="Nomor Telepon"
+                  wajib
+                  type="tel"
+                  error={errors.phone?.[0]}
+                  value={form.phone}
+                  onChange={(v) => updateField("phone", v)}
+                  className={kelasInput("phone")}
+                  autoComplete="tel"
+                  placeholder="08xxxxxxxxxx"
+                />
 
-          <div className="mt-6 pt-6 border-t border-border">
-            <h2 className="font-bold text-heading mb-4">Ringkasan Pesanan</h2>
-            <div className="space-y-3 mb-6">
-              {items.map((item) => (
-                <div key={item.product.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0">
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.name}
-                        className="w-full h-full object-cover"
-                        fill
-                        sizes="32px"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div>
-                      <div className="font-medium text-heading">
-                        {item.product.name}
+                <div className="space-y-2 sm:col-span-2">
+                  <label
+                    htmlFor="notes"
+                    className="block text-sm font-semibold text-heading"
+                  >
+                    Catatan Pesanan
+                  </label>
+                  <textarea
+                    id="notes"
+                    rows={3}
+                    value={form.notes}
+                    onChange={(e) => updateField("notes", e.target.value)}
+                    className={`${kelasInput("notes")} resize-y`}
+                    placeholder="Catatan tambahan untuk admin (opsional)"
+                    aria-invalid={Boolean(errors.notes)}
+                  />
+                  {errors.notes?.[0] && (
+                    <p className="text-xs font-medium text-danger-600">
+                      {errors.notes[0]}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </fieldset>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-base font-bold text-white shadow-lg shadow-orange-200 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {submitting ? (
+                <>
+                  <Loader2
+                    className="h-5 w-5 animate-spin"
+                    aria-hidden="true"
+                  />
+                  Membuat pesanan...
+                </>
+              ) : (
+                "Buat Pesanan"
+              )}
+            </button>
+
+            <p className="text-center text-xs leading-relaxed text-muted">
+              Pesanan akan diproses oleh admin KWU. Pembaruan status pesanan
+              dikirimkan ke alamat surel Anda.
+            </p>
+          </form>
+
+          {/* Ringkasan pesanan */}
+          <aside className="lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-soft sm:p-6">
+              <h2 className="mb-4 text-lg font-bold text-heading">
+                Ringkasan Pesanan
+              </h2>
+
+              <ul className="mb-5 space-y-4">
+                {items.map((item) => (
+                  <li
+                    key={item.product.id}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          fill
+                          sizes="44px"
+                          className="object-cover"
+                        />
                       </div>
-                      <div className="text-xs text-muted">
-                        {item.quantity} × {formatRupiah(item.product.price)}
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-heading">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {item.quantity} × {formatRupiah(item.product.price)}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  <span className="font-medium text-primary">
-                    {formatRupiah(item.product.price * item.quantity)}
+                    <span className="shrink-0 font-semibold text-primary">
+                      {formatRupiah(item.product.price * item.quantity)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="space-y-2.5 border-t border-border pt-4">
+                <div className="flex justify-between text-sm text-muted">
+                  <span>Subtotal ({itemCount} item)</span>
+                  <span className="font-medium text-heading">
+                    {formatRupiah(subtotal)}
                   </span>
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-between text-lg font-bold text-heading pt-4 border-t border-border">
-              <span>Total</span>
-              <span>{formatRupiah(subtotal)}</span>
-            </div>
-          </div>
+                <div className="flex justify-between text-sm text-muted">
+                  <span>Biaya layanan</span>
+                  <span className="font-medium text-heading">Rp 0</span>
+                </div>
+              </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-4 rounded-xl bg-primary text-white text-lg font-bold hover:bg-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-orange-500/25"
-          >
-            {submitting ? "Membuat pesanan..." : "Buat Pesanan"}
-          </button>
-
-          <p className="text-sm text-muted text-center mt-4">
-            Pesanan akan diproses oleh admin KWU. Pembaruan status pesanan
-            dikirimkan ke alamat surel Anda.
-          </p>
-        </form>
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-lg font-bold text-heading">Total</span>
+                <span className="text-xl font-extrabold text-primary">
+                  {formatRupiah(subtotal)}
+                </span>
+              </div>
+            </div>
+          </aside>
+        </div>
       )}
     </section>
   );
 }
 
-import Image from "next/image";
+function Bidang({
+  id,
+  label,
+  wajib,
+  type = "text",
+  error,
+  value,
+  onChange,
+  className,
+  autoComplete,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  wajib?: boolean;
+  type?: string;
+  error?: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  autoComplete?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="block text-sm font-semibold text-heading">
+        {label} {wajib && <span className="text-danger-600">*</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={className}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        required={wajib}
+      />
+      {error && (
+        <p id={`${id}-error`} className="text-xs font-medium text-danger-600">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}

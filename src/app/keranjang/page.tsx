@@ -4,162 +4,192 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/contexts/cart-context";
 import { formatRupiah } from "@/lib/format";
-import { Trash2, Minus, Plus, ChevronLeft } from "lucide-react";
+import {
+  Trash2,
+  Minus,
+  Plus,
+  ChevronLeft,
+  ShoppingCart,
+  ArrowRight,
+  Trash,
+} from "lucide-react";
 
 export default function Keranjang() {
   const { items, removeItem, updateQuantity, subtotal, itemCount, clear } =
     useCart();
 
   return (
-    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-2 mb-6">
+    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-6">
         <Link
           href="/katalog"
-          className="text-sm text-primary hover:underline flex items-center gap-2"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover"
         >
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Kembali ke Katalog
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Kembali ke
+          Katalog
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-heading mb-6">Keranjang Belanja</h1>
+      <h1 className="mb-2 text-2xl font-bold text-heading md:text-3xl">
+        Keranjang Belanja
+      </h1>
+      {itemCount > 0 && (
+        <p className="mb-8 text-muted">
+          {itemCount} item siap di-checkout.
+        </p>
+      )}
 
       {itemCount === 0 ? (
-        <div className="bg-neutral-50 border border-border rounded-xl p-12 text-center">
-          <p className="text-muted mb-4">Keranjang Anda masih kosong.</p>
+        <div className="rounded-2xl border border-border bg-surface px-6 py-16 text-center">
+          <ShoppingCart
+            className="mx-auto mb-4 h-10 w-10 text-muted"
+            aria-hidden="true"
+          />
+          <h2 className="mb-2 text-lg font-bold text-heading">
+            Keranjang Anda masih kosong
+          </h2>
+          <p className="mb-6 text-sm text-muted">
+            Jelajahi katalog dan pilih kebutuhan kampus Anda.
+          </p>
           <Link
             href="/katalog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-primary-hover"
           >
             Belanja Sekarang
           </Link>
         </div>
       ) : (
-        <div className="bg-white border border-border rounded-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-neutral-50">
-                  <th className="px-6 py-3 text-sm font-semibold text-muted">Produk</th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
-                    Harga Satuan
-                  </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-center">
-                    Jumlah
-                  </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.product.id} className="border-b border-border last:border-0">
-                    <td className="px-6 py-4 text-sm text-heading">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden">
-                          <Image
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                            fill
-                            sizes="48px"
-                            loading="lazy"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium text-heading truncate">
-                            {item.product.name}
-                          </div>
-                          <div className="text-xs text-muted truncate">
-                            {item.product.slug}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-primary text-right">
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start lg:gap-8">
+          {/* Daftar item */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
+            <ul className="divide-y divide-border">
+              {items.map((item) => (
+                <li
+                  key={item.product.id}
+                  className="flex items-start gap-3 p-4 transition-colors duration-200 hover:bg-surface-muted sm:gap-4 sm:p-5"
+                >
+                  <Link
+                    href={`/produk/${item.product.slug}`}
+                    className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-neutral-100 sm:h-20 sm:w-20"
+                  >
+                    <Image
+                      src={item.product.image}
+                      alt={item.product.name}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </Link>
+
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/produk/${item.product.slug}`}
+                      className="line-clamp-2 text-sm font-semibold text-heading transition-colors duration-200 hover:text-primary sm:text-base"
+                    >
+                      {item.product.name}
+                    </Link>
+                    <p className="mt-0.5 text-sm font-medium text-primary">
                       {formatRupiah(item.product.price)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    </p>
+
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="inline-flex items-center rounded-lg border border-border bg-white">
                         <button
+                          type="button"
                           onClick={() =>
                             updateQuantity(item.product.id, item.quantity - 1)
                           }
                           disabled={item.quantity <= 1}
-                          className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-l-lg text-body transition-colors duration-200 hover:bg-primary-soft hover:text-primary disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:bg-transparent disabled:hover:text-neutral-300"
+                          aria-label={`Kurangi jumlah ${item.product.name}`}
                         >
                           <Minus className="h-4 w-4" aria-hidden="true" />
                         </button>
-                        <span className="w-8 text-center font-medium">
+                        <span className="w-9 text-center text-sm font-semibold text-heading">
                           {item.quantity}
                         </span>
                         <button
+                          type="button"
                           onClick={() =>
                             updateQuantity(item.product.id, item.quantity + 1)
                           }
-                          className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-r-lg text-body transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
+                          aria-label={`Tambah jumlah ${item.product.name}`}
                         >
                           <Plus className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-primary text-right">
-                      {formatRupiah(item.product.price * item.quantity)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-right">
-                      <button
-                        onClick={() => removeItem(item.product.id)}
-                        className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Hapus dari keranjang"
-                        aria-label={`Hapus ${item.product.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-heading sm:text-base">
+                          {formatRupiah(item.product.price * item.quantity)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.product.id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-danger-50 hover:text-danger-600"
+                          title="Hapus dari keranjang"
+                          aria-label={`Hapus ${item.product.name} dari keranjang`}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="border-t border-border p-6 bg-neutral-50">
-            <div className="flex justify-between mb-6">
-              <span className="text-sm text-muted">Subtotal</span>
-              <span className="text-sm font-medium text-heading">
-                {formatRupiah(subtotal)}
-              </span>
-            </div>
-            <div className="flex justify-between mb-6 text-sm text-muted">
-              <span>Biaya layanan</span>
-              <span>Rp 0</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold text-heading pt-4 border-t border-border">
-              <span>Total</span>
-              <span className="font-bold">{formatRupiah(subtotal)}</span>
-            </div>
+          {/* Ringkasan */}
+          <aside className="lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-soft sm:p-6">
+              <h2 className="mb-4 text-lg font-bold text-heading">
+                Ringkasan Belanja
+              </h2>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-sm text-muted">
+                  <span>Subtotal ({itemCount} item)</span>
+                  <span className="font-medium text-heading">
+                    {formatRupiah(subtotal)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm text-muted">
+                  <span>Biaya layanan</span>
+                  <span className="font-medium text-heading">Rp 0</span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-lg font-bold text-heading">Total</span>
+                <span className="text-xl font-extrabold text-primary">
+                  {formatRupiah(subtotal)}
+                </span>
+              </div>
+
               <Link
                 href="/checkout"
-                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl bg-primary text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-md shadow-orange-200"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-bold text-white shadow-lg shadow-orange-200 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl active:translate-y-0"
               >
                 Lanjutkan Checkout
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
+
               <button
+                type="button"
                 onClick={() => {
                   if (window.confirm("Kosongkan seluruh keranjang?")) {
                     clear();
                   }
                 }}
-                className="flex-1 sm:w-auto py-3.5 px-6 rounded-xl border border-border text-heading font-semibold text-center hover:bg-neutral-100 transition-colors"
+                className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border py-3 text-sm font-semibold text-body transition-colors duration-200 hover:border-danger-500 hover:bg-danger-50 hover:text-danger-600"
               >
-                Kosongkan
+                <Trash className="h-4 w-4" aria-hidden="true" />
+                Kosongkan keranjang
               </button>
             </div>
-          </div>
+          </aside>
         </div>
       )}
     </section>
