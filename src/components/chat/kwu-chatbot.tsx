@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, RefreshCw, Bot, X as CloseIcon } from "lucide-react";
+import { Send, RefreshCw, Bot, X as CloseIcon, Loader2 } from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -27,6 +27,7 @@ export function KwuChatbot() {
   const [connected, setConnected] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const quickReplies = [
     "Cari produk",
@@ -37,17 +38,38 @@ export function KwuChatbot() {
   ];
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
+
+  // Kunci scroll halaman dan fokuskan input saat panel terbuka.
+  useEffect(() => {
+    if (!open) return;
+
+    const sebelumnya = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    inputRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = sebelumnya;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || sending) return;
 
+    const teks = input.trim();
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      content: input,
+      content: teks,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -72,7 +94,7 @@ export function KwuChatbot() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, history: riwayat }),
+        body: JSON.stringify({ message: teks, history: riwayat }),
       });
 
       if (!res.ok) throw new Error("Gagal mendapatkan balasan");
@@ -110,15 +132,20 @@ export function KwuChatbot() {
 
   const addQuickReply = (text: string) => {
     setInput(text);
+    inputRef.current?.focus();
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100]">
-      {/* Tombol chat floating */}
+    <div className="fixed bottom-4 right-4 z-[100] sm:bottom-6 sm:right-6">
+      {/* Tombol chat mengambang */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-orange-500/40 hover:bg-orange-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         aria-label="Buka Asisten KWU"
+        aria-expanded={open}
+        className={`flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-orange-500/35 transition-all duration-300 hover:-translate-y-1 hover:bg-primary-hover hover:shadow-2xl hover:shadow-orange-500/45 focus:outline-none focus:ring-4 focus:ring-orange-200 active:translate-y-0 ${
+          open ? "pointer-events-none scale-90 opacity-0" : "scale-100 opacity-100"
+        }`}
       >
         <Bot className="h-6 w-6" aria-hidden="true" />
         <span className="sr-only">Buka Asisten KWU</span>
@@ -126,55 +153,78 @@ export function KwuChatbot() {
 
       {/* Panel chat */}
       {open && (
-        <div className="fixed inset-0 z-[101] flex flex-col" role="dialog" aria-modal="true" aria-label="Asisten KWU">
-          {/* Overlay */}
+        <div
+          className="fixed inset-0 z-[101] flex flex-col sm:inset-auto sm:bottom-6 sm:right-6 sm:z-[101] sm:h-[600px] sm:w-[420px]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Asisten KWU"
+        >
+          {/* Lapisan gelap untuk layar kecil */}
           <button
+            type="button"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/30 lg:hidden"
+            className="absolute inset-0 h-full w-full cursor-default bg-neutral-900/40 backdrop-blur-sm animate-fade-in sm:hidden"
             aria-label="Tutup chat"
+            tabIndex={-1}
           />
 
-          {/* Panel */}
-          <div className="flex flex-col h-full w-full lg:w-[430px] lg:h-[600px] lg:absolute lg:bottom-4 lg:right-4 lg:rounded-2xl lg:shadow-2xl bg-surface border border-border">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary text-white rounded-t-2xl lg:rounded-t-none lg:rounded-r-2xl">
+          <div
+            ref={panelRef}
+            className="relative flex h-full w-full flex-col overflow-hidden border border-border bg-white shadow-2xl animate-fade-in-scale sm:rounded-2xl"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-primary px-4 py-3 text-white">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5" aria-hidden="true" />
                 <span className="font-semibold">Asisten KWU</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs">
                 <span
-                  className={`w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-amber-500"}`}
+                  className={`h-2 w-2 rounded-full ${
+                    connected ? "bg-green-300" : "bg-amber-300"
+                  }`}
                   aria-hidden="true"
                 />
                 <span>{connected ? "Terhubung" : "Terputus"}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setOpen(false)}
-                className="text-white/80 hover:text-white p-1.5 rounded-md"
+                className="rounded-md p-1.5 text-white/85 transition-colors duration-200 hover:bg-white/15 hover:text-white"
                 aria-label="Tutup chat"
               >
                 <CloseIcon className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+            <div
+              className="flex-1 space-y-4 overflow-y-auto p-4"
+              ref={scrollRef}
+              aria-live="polite"
+            >
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 max-w-[85%] ${
+                  className={`flex max-w-[85%] gap-3 ${
                     msg.role === "user" ? "flex-row-reverse" : ""
                   }`}
                 >
                   <div
-                    className={`p-3 rounded-lg rounded-tr-none ${
+                    className={`whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-primary text-white rounded-tl-none"
-                        : "bg-neutral-100 text-foreground rounded-br-none"
+                        ? "rounded-tr-sm bg-primary text-white"
+                        : "rounded-tl-sm bg-neutral-100 text-heading"
                     }`}
                   >
-                    {msg.content}
-                    {msg.loading && (
-                      <span className="ml-2 h-3 w-3 rounded-full bg-current animate-pulse" aria-hidden="true" />
+                    {msg.loading ? (
+                      <span className="inline-flex items-center gap-1.5 text-muted">
+                        <Loader2
+                          className="h-3.5 w-3.5 animate-spin"
+                          aria-hidden="true"
+                        />
+                        Mengetik...
+                      </span>
+                    ) : (
+                      msg.content
                     )}
                   </div>
                 </div>
@@ -182,21 +232,22 @@ export function KwuChatbot() {
               <div ref={scrollRef} />
             </div>
 
-            <div className="border-t border-border p-3 bg-surface">
-              {/* Quick replies */}
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+            <div className="border-t border-border bg-surface p-3">
+              {/* Balasan cepat */}
+              <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-1">
                 {quickReplies.map((qr) => (
                   <button
                     key={qr}
+                    type="button"
                     onClick={() => addQuickReply(qr)}
-                    className="px-3 py-1.5 rounded-full border border-neutral-200 text-sm text-neutral-600 bg-white hover:bg-primary hover:text-white transition-colors whitespace-nowrap"
+                    className="shrink-0 whitespace-nowrap rounded-full border border-border bg-white px-3.5 py-1.5 text-sm text-body transition-colors duration-200 hover:border-primary hover:bg-primary-soft hover:text-primary"
                   >
                     {qr}
                   </button>
                 ))}
               </div>
 
-              <form onSubmit={sendMessage} className="flex gap-2">
+              <form onSubmit={sendMessage} className="flex items-center gap-2">
                 <input
                   ref={inputRef}
                   type="text"
@@ -204,29 +255,35 @@ export function KwuChatbot() {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ketik pesan Anda..."
                   disabled={sending}
-                  className="flex-1 pl-4 pr-10 py-2.5 border border-border rounded-full text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
-                  aria-label="Input pesan chatbot"
+                  className="min-w-0 flex-1 rounded-full border border-border bg-white px-4 py-2.5 text-sm text-heading transition-shadow duration-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-orange-100 disabled:opacity-60"
+                  aria-label="Input pesan asisten"
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="p-2.5 rounded-full bg-primary text-white hover:bg-orange-500 disabled:opacity-60 transition-colors"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white transition-all duration-200 hover:bg-primary-hover disabled:opacity-50"
                   aria-label="Kirim pesan"
                 >
-                  <Send className="h-4 w-4" aria-hidden="true" />
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Send className="h-4 w-4" aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setInput("")}
-                  className="p-2.5 rounded-full border border-border text-neutral-600 hover:bg-neutral-100 transition-colors"
+                  disabled={!input}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors duration-200 hover:bg-neutral-100 hover:text-heading disabled:opacity-50"
                   aria-label="Hapus pesan"
                 >
                   <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 </button>
               </form>
 
-              <p className="text-xs text-neutral-500 mt-2">
-                Percakapan dengan asisten AI KWU. Data pribadi tidak dikumpulkan tanpa persetujuan.
+              <p className="mt-2 text-center text-[11px] leading-relaxed text-muted">
+                Percakapan dengan asisten AI KWU. Data pribadi tidak dikumpulkan
+                tanpa persetujuan.
               </p>
             </div>
           </div>
@@ -235,4 +292,3 @@ export function KwuChatbot() {
     </div>
   );
 }
-
