@@ -1,10 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, Filter, Plus } from "lucide-react";
-import { formatRupiah, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { RFQ_STATUS_LABELS } from "@/types/rfq";
+
+interface AdminRfq {
+  id: string;
+  rfq_number: string;
+  organization_name: string;
+  contact_name: string;
+  business_email: string;
+  status: string;
+  required_date: string;
+  created_at: string;
+}
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: "bg-amber-50 text-amber-600 border-amber-100",
@@ -19,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminRfqs() {
-  const [rfqs, setRfqs] = useState<any[]>([]);
+  const [rfqs, setRfqs] = useState<AdminRfq[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -29,31 +40,36 @@ export default function AdminRfqs() {
     pageSize: 10,
   });
 
-  const loadRfqs = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (filters.status) params.set("status", filters.status);
-      if (filters.search) params.set("search", filters.search);
-      params.set("page", String(filters.page));
-      params.set("pageSize", String(filters.pageSize));
-
-      const res = await fetch(`/api/admin/rfqs?${params}`);
-      const data = await res.json();
-      if (data.success) {
-        setRfqs(data.data.rfqs);
-        setTotal(data.data.total);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
   useEffect(() => {
+    let aktif = true;
+
+    async function loadRfqs() {
+      try {
+        const params = new URLSearchParams();
+        if (filters.status) params.set("status", filters.status);
+        if (filters.search) params.set("search", filters.search);
+        params.set("page", String(filters.page));
+        params.set("pageSize", String(filters.pageSize));
+
+        const res = await fetch(`/api/admin/rfqs?${params}`);
+        const data = await res.json();
+        if (!aktif) return;
+        if (data.success) {
+          setRfqs(data.data.rfqs);
+          setTotal(data.data.total);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
     loadRfqs();
-  }, [loadRfqs]);
+    return () => {
+      aktif = false;
+    };
+  }, [filters]);
 
   const totalPages = Math.max(Math.ceil(total / filters.pageSize), 1);
 

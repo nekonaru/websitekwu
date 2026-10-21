@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import {
@@ -90,6 +90,7 @@ export default function AdminRfqDetail({
   const [busy, setBusy] = useState(false);
 
   const [rfqId, setRfqId] = useState<string>("");
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let aktif = true;
@@ -105,30 +106,41 @@ export default function AdminRfqDetail({
     };
   }, [params]);
 
-  const loadRfq = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/rfqs/${id}`);
-      const data = await res.json();
-      if (data.success) {
-        setRfq(data.data);
-      } else {
-        setMessage({
-          type: "error",
-          text: data.error ?? "Gagal memuat detail RFQ",
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage({ type: "error", text: "Gagal memuat detail RFQ" });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (!rfqId) return;
-    loadRfq(rfqId);
-  }, [rfqId, loadRfq]);
+
+    let aktif = true;
+
+    async function loadRfq() {
+      try {
+        const res = await fetch(`/api/rfqs/${rfqId}`);
+        const data = await res.json();
+        if (!aktif) return;
+        if (data.success) {
+          setRfq(data.data);
+        } else {
+          setMessage({
+            type: "error",
+            text: data.error ?? "Gagal memuat detail RFQ",
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        if (aktif) {
+          setMessage({ type: "error", text: "Gagal memuat detail RFQ" });
+        }
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
+    loadRfq();
+    return () => {
+      aktif = false;
+    };
+  }, [rfqId, reloadToken]);
+
+  const reload = () => setReloadToken((token) => token + 1);
 
   async function handleStatusChange(newStatus: string) {
     if (!rfq) return;
@@ -147,7 +159,7 @@ export default function AdminRfqDetail({
         type: "success",
         text: `Status diubah menjadi ${STATUS_LABEL(newStatus)}`,
       });
-      await loadRfq(rfq.id);
+      reload();
     } catch (err: unknown) {
       setMessage({ type: "error", text: getErrorMessage(err, "Gagal mengubah status") });
     } finally {
@@ -171,7 +183,7 @@ export default function AdminRfqDetail({
       }
       setNewNote("");
       setMessage({ type: "success", text: "Catatan berhasil ditambahkan" });
-      await loadRfq(rfq.id);
+      reload();
     } catch (err: unknown) {
       setMessage({ type: "error", text: getErrorMessage(err, "Gagal menambah catatan") });
     } finally {
@@ -219,7 +231,7 @@ export default function AdminRfqDetail({
         text: `Quotation ${data.data.quotationNumber} versi ${data.data.version} berhasil dibuat`,
       });
       setOpenQuotationForm(false);
-      await loadRfq(rfq.id);
+      reload();
     } catch (err: unknown) {
       setMessage({ type: "error", text: getErrorMessage(err, "Gagal membuat quotation") });
     } finally {
@@ -239,7 +251,7 @@ export default function AdminRfqDetail({
         throw new Error(data.error ?? "Gagal mengonversi");
       }
       setMessage({ type: "success", text: "Quotation berhasil dikonversi" });
-      if (rfq) await loadRfq(rfq.id);
+      reload();
     } catch (err: unknown) {
       setMessage({ type: "error", text: getErrorMessage(err, "Gagal mengonversi quotation") });
     }

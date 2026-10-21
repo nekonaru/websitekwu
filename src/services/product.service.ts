@@ -35,7 +35,7 @@ export interface Category {
 }
 
 /** Bentuk baris tabel `products` di database Supabase. */
-interface ProductRow {
+export interface ProductRow {
   id: string;
   name: string;
   slug: string;
@@ -60,7 +60,7 @@ interface CategoryRow {
 }
 
 /** Ubah baris database menjadi objek produk yang dipakai aplikasi. */
-function toProduct(row: ProductRow): Product {
+export function toProduct(row: ProductRow): Product {
   return {
     id: row.id,
     name: row.name,

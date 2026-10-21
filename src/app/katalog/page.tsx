@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -31,11 +31,12 @@ function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="flex flex-col border border-border rounded-2xl p-5 bg-white hover:shadow-2xl transition-all duration-300 hover:border-primary/50 group">
       <div className="aspect-[4/5] overflow-hidden rounded-xl mb-4 relative bg-neutral-100 group-hover:scale-105 transition-transform duration-300">
-        <img
+        <Image
           src={product.image}
           alt={product.name}
+          width={400}
+          height={500}
           className="w-full h-full object-cover"
-          loading="lazy"
         />
         {!inStock && (
           <span className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -79,39 +80,49 @@ export default function Katalog() {
 
   const PAGE_SIZE = 9;
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      let products: Product[] = [];
-      if (query) {
-        const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        products = data.success ? data.data : [];
-      } else if (categoryFilter) {
-        const res = await fetch(`/api/products?category=${categoryFilter}`);
-        const data = await res.json();
-        products = data.success ? data.data : [];
-      } else {
-        const res = await fetch("/api/products");
-        const data = await res.json();
-        products = data.success ? data.data : [];
-      }
-
-      const uniqueCategories = [
-        ...new Set(products.map((p) => p.category).filter((c): c is string => Boolean(c))),
-      ];
-      setCategories(uniqueCategories);
-      setProducts(products);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [categoryFilter, query]);
-
   useEffect(() => {
+    let aktif = true;
+
+    async function loadData() {
+      try {
+        let daftarProduk: Product[] = [];
+        if (query) {
+          const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          daftarProduk = data.success ? data.data : [];
+        } else if (categoryFilter) {
+          const res = await fetch(`/api/products?category=${categoryFilter}`);
+          const data = await res.json();
+          daftarProduk = data.success ? data.data : [];
+        } else {
+          const res = await fetch("/api/products");
+          const data = await res.json();
+          daftarProduk = data.success ? data.data : [];
+        }
+
+        if (!aktif) return;
+
+        const uniqueCategories = [
+          ...new Set(
+            daftarProduk
+              .map((p) => p.category)
+              .filter((c): c is string => Boolean(c))
+          ),
+        ];
+        setCategories(uniqueCategories);
+        setProducts(daftarProduk);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
     loadData();
-  }, [loadData]);
+    return () => {
+      aktif = false;
+    };
+  }, [categoryFilter, query]);
 
   const totalPages = Math.max(Math.ceil(products.length / PAGE_SIZE), 1);
   const currentPage = Math.min(page, totalPages);
@@ -149,7 +160,10 @@ export default function Katalog() {
               <h3 className="text-sm font-semibold text-heading mb-3">Kategori</h3>
               <div className="space-y-2">
                 <button
-                  onClick={() => setCategoryFilter("")}
+                  onClick={() => {
+                    setLoading(true);
+                    setCategoryFilter("");
+                  }}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                     !categoryFilter ? "bg-primary text-white" : "text-neutral-600 hover:bg-neutral-100"
                   }`}
@@ -159,7 +173,10 @@ export default function Katalog() {
                 {categories.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setCategoryFilter(cat)}
+                    onClick={() => {
+                      setLoading(true);
+                      setCategoryFilter(cat);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                       categoryFilter === cat ? "bg-primary text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
@@ -223,7 +240,10 @@ export default function Katalog() {
               type="search"
               placeholder="Cari produk..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setLoading(true);
+                setQuery(e.target.value);
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
                 setPage(1);
@@ -241,7 +261,20 @@ export default function Katalog() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginated.length > 0 ? (
+            {loading ? (
+              Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                <div
+                  key={index}
+                  className="border border-border rounded-2xl p-5 bg-white animate-pulse"
+                  aria-hidden="true"
+                >
+                  <div className="aspect-[4/5] rounded-xl mb-4 bg-neutral-200" />
+                  <div className="h-4 w-3/4 rounded bg-neutral-200 mb-3" />
+                  <div className="h-5 w-1/2 rounded bg-neutral-200 mb-3" />
+                  <div className="h-10 w-full rounded-xl bg-neutral-200" />
+                </div>
+              ))
+            ) : paginated.length > 0 ? (
               paginated.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))

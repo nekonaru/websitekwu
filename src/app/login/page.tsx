@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { getErrorMessage } from "@/lib/format";
 
 export default function Login() {
   const [email, setEmail] = useState("");

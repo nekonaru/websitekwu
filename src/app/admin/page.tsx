@@ -68,9 +68,6 @@ export default function AdminDashboard() {
   const categoryCount = new Set(
     products.map((p) => p.category).filter(Boolean)
   ).size;
-  const orderCount = orders.length;
-  const rfqCount = rfqs.length;
-
   const pendingOrders = orders.filter((o) => o.status === "pending").length;
   const pendingRfqs = rfqs.filter((r) => r.status === "submitted").length;
 

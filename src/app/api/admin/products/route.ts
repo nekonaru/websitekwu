@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
 import { createServiceSupabaseClient } from "@/lib/supabase";
-import { createProductAdmin } from "@/services/product.service";
+import { createProductAdmin, toProduct, type ProductRow } from "@/services/product.service";
 import { z } from "zod";
 
 export async function GET() {
@@ -21,21 +21,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: (data ?? []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        description: p.description,
-        shortDescription: p.short_description,
-        price: p.price,
-        stock: p.stock,
-        category: p.category,
-        image: p.image_url,
-        isFeatured: p.is_featured,
-        isDraft: p.is_draft,
-        createdAt: p.created_at,
-        updatedAt: p.updated_at,
-      })),
+      data: (data ?? []).map((p: ProductRow) => toProduct(p)),
     });
   } catch (err: unknown) {
     console.error("GET /api/admin/products error:", err);

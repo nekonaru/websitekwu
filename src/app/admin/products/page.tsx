@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getErrorMessage } from "@/lib/format";
-import Link from "next/link";
+import Image from "next/image";
 import { Plus, Trash2, Edit, Search } from "lucide-react";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, getErrorMessage } from "@/lib/format";
+
+interface AdminProduct {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string;
+  price: number;
+  stock: number;
+  category: string;
+  image: string;
+  isFeatured: boolean;
+  isDraft: boolean;
+}
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [openForm, setOpenForm] = useState(false);
@@ -119,7 +132,7 @@ export default function AdminProducts() {
     }
   }
 
-  function handleEdit(p: any) {
+  function handleEdit(p: AdminProduct) {
     setEditingId(p.id);
     setFormData({
       name: p.name,
@@ -392,9 +405,11 @@ export default function AdminProducts() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden">
-                        <img
+                        <Image
                           src={p.image || "/placeholder.svg"}
                           alt={p.name}
+                          width={40}
+                          height={40}
                           className="w-full h-full object-cover"
                         />
                       </div>

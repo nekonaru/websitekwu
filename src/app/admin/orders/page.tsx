@@ -1,10 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { getErrorMessage } from "@/lib/format";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
-import { formatRupiah, formatDate } from "@/lib/format";
+import { formatRupiah, formatDate, getErrorMessage } from "@/lib/format";
+
+interface AdminOrder {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600 border-amber-100",
@@ -17,28 +25,33 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/admin/orders");
-      const data = await res.json();
-      if (data.success) {
-        setOrders(data.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    let aktif = true;
+
+    async function loadOrders() {
+      try {
+        const res = await fetch("/api/admin/orders");
+        const data = await res.json();
+        if (!aktif) return;
+        if (data.success) {
+          setOrders(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
     loadOrders();
-  }, [loadOrders]);
+    return () => {
+      aktif = false;
+    };
+  }, []);
 
   async function handleStatusChange(orderId: string, newStatus: string) {
     if (!window.confirm(`Ubah status pesanan menjadi ${newStatus}?`)) return;

@@ -5,7 +5,6 @@
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
-  isSupabaseConfigured,
 } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";

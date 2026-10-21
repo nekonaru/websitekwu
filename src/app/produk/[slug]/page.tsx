@@ -6,27 +6,46 @@ import { ShoppingCart, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatRupiah } from "@/lib/format";
 
+interface ProductDetailData {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string;
+  price: number;
+  stock: number;
+  category: string;
+  image: string;
+  isFeatured: boolean;
+}
+
 export default function ProductDetail({
   params,
 }: { params: Promise<{ slug: string }> }) {
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ProductDetailData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let aktif = true;
+
     async function load() {
       const { slug } = await params;
       try {
         const res = await fetch(`/api/produk/${slug}`);
         const data = await res.json();
+        if (!aktif) return;
         setProduct(data.success ? data.data : null);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (aktif) setLoading(false);
       }
     }
     load();
-  }, []);
+    return () => {
+      aktif = false;
+    };
+  }, [params]);
 
   if (loading) return <div className="max-w-2xl mx-auto py-12 text-center">Memuat produk...</div>;
   if (!product) return <div className="max-w-2xl mx-auto py-12 text-center">Produk tidak ditemukan.</div>;

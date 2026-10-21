@@ -1,48 +1,79 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, User, LogOut, ArrowRight } from "lucide-react";
+import { User, LogOut, ArrowRight } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/format";
 
+interface ProfileUser {
+  id: string;
+  email: string;
+  user_metadata?: {
+    full_name?: string;
+    phone?: string;
+    address?: string;
+  };
+}
+
+interface ProfileOrder {
+  id: string;
+  order_number: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
 export default function Profil() {
-  const [user, setUser] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [user, setUser] = useState<ProfileUser | null>(null);
+  const [orders, setOrders] = useState<ProfileOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const loadProfile = useCallback(async () => {
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      if (!authUser) {
-        router.push("/login");
-        return;
-      }
-
-      setUser(authUser);
-
-      // Ambil pesanan
-      const res = await fetch("/api/my/orders");
-      const data = await res.json();
-      if (data.success) {
-        setOrders(data.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
   useEffect(() => {
+    let aktif = true;
+
+    async function loadProfile() {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
+        if (!authUser) {
+          router.push("/login");
+          return;
+        }
+
+        if (!aktif) return;
+
+        setUser({
+          id: authUser.id,
+          email: authUser.email ?? "",
+          user_metadata: (authUser.user_metadata ??
+            {}) as ProfileUser["user_metadata"],
+        });
+
+        // Ambil pesanan
+        const res = await fetch("/api/my/orders");
+        const data = await res.json();
+        if (!aktif) return;
+        if (data.success) {
+          setOrders(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
     loadProfile();
-  }, [loadProfile]);
+    return () => {
+      aktif = false;
+    };
+  }, [router]);
 
   async function handleSignOut() {
     const supabase = createBrowserSupabaseClient();

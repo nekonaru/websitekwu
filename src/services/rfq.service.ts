@@ -133,7 +133,7 @@ export async function getAllRfqsAdmin({
     throw new Error("Autentikasi diperlukan");
   }
 
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
   if (!isAdmin) {
     throw new Error("Hanya admin yang dapat mengakses daftar RFQ");
   }
