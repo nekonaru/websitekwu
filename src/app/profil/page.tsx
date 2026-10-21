@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, LogOut, ArrowRight } from "lucide-react";
@@ -13,14 +13,9 @@ export default function Profil() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const supabase = createBrowserSupabaseClient();
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  async function loadProfile() {
+  const loadProfile = useCallback(async () => {
     try {
+      const supabase = createBrowserSupabaseClient();
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -43,9 +38,14 @@ export default function Profil() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   async function handleSignOut() {
+    const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.push("/");
   }

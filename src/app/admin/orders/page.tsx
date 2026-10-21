@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { formatRupiah, formatDate } from "@/lib/format";
@@ -20,11 +20,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/admin/orders");
@@ -37,7 +33,11 @@ export default function AdminOrders() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   async function handleStatusChange(orderId: string, newStatus: string) {
     if (!window.confirm(`Ubah status pesanan menjadi ${newStatus}?`)) return;

@@ -126,7 +126,6 @@ export default function AdminRfqDetail({
 
   useEffect(() => {
     if (!rfqId) return;
-    setLoading(true);
     loadRfq(rfqId);
   }, [rfqId, loadRfq]);
 
@@ -578,7 +577,9 @@ export default function AdminRfqDetail({
                     </div>
                   </div>
                   {h.note && (
-                    <span className="text-xs text-muted ml-2">"{h.note}"</span>
+                    <span className="text-xs text-muted ml-2">
+                      &quot;{h.note}&quot;
+                    </span>
                   )}
                 </div>
               ))}

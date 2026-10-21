@@ -4,6 +4,10 @@
  */
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import {
+  updateProductAdmin,
+  deleteProductAdmin,
+} from "@/services/product.service";
 import { z } from "zod";
 
 const productSchema = z.object({
@@ -16,6 +20,7 @@ const productSchema = z.object({
   category: z.string().min(1),
   imageUrl: z.string().url().optional().nullable(),
   isFeatured: z.boolean().default(false),
+  isDraft: z.boolean().default(false),
 });
 
 export async function GET(
@@ -81,7 +86,6 @@ export async function PATCH(
       );
     }
 
-    const { updateProductAdmin } = require("@/services/product.service");
     const data = await updateProductAdmin(id, {
       name: parsed.data.name,
       slug: parsed.data.slug,
@@ -90,9 +94,9 @@ export async function PATCH(
       price: parsed.data.price,
       stock: parsed.data.stock,
       category: parsed.data.category,
-      imageUrl: parsed.data.imageUrl,
+      imageUrl: parsed.data.imageUrl ?? undefined,
       isFeatured: parsed.data.isFeatured,
-      isDraft: (parsed.data as any).isDraft ?? false,
+      isDraft: parsed.data.isDraft ?? false,
     });
 
     return NextResponse.json({ success: true, data });
@@ -111,7 +115,6 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { deleteProductAdmin } = require("@/services/product.service");
     await deleteProductAdmin(id);
     return NextResponse.json({ success: true });
   } catch (err: any) {

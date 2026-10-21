@@ -3,7 +3,8 @@
  * Buat quotation baru untuk RFQ (admin only).
  */
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { cookies } from "next/headers";
+import type { CookieMethodsServer } from "@supabase/ssr";
 import { createQuotation } from "@/services/quotation.service";
 import { z } from "zod";
 
@@ -26,15 +27,6 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const supabase = createServerSupabaseClient(
-      // cookies akan diambil secara otomatis oleh createServerSupabaseClient
-      // melalui Next.js cookies() di runtime
-      (() => {
-        const { cookies } = require("next/headers");
-        return cookies();
-      })() as any
-    );
-
     const body = await req.json();
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
@@ -46,10 +38,7 @@ export async function POST(req: Request) {
 
     const result = await createQuotation({
       input: parsed.data,
-      cookies: (() => {
-        const { cookies } = require("next/headers");
-        return cookies();
-      })() as any,
+      cookies: cookies as unknown as () => CookieMethodsServer,
     });
 
     return NextResponse.json(

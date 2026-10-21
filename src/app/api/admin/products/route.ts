@@ -4,6 +4,8 @@
  */
 import { NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabase";
+import { createProductAdmin } from "@/services/product.service";
+import { z } from "zod";
 
 export async function GET() {
   try {
@@ -47,8 +49,6 @@ export async function GET() {
  * API Route: POST /api/admin/products
  * Buat produk baru (admin).
  */
-import { z } from "zod";
-
 const productSchema = z.object({
   name: z.string().min(2).max(200),
   slug: z.string().min(2).max(200),
@@ -72,7 +72,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const { createProductAdmin } = require("@/services/product.service");
     const data = await createProductAdmin({
       name: parsed.data.name,
       slug: parsed.data.slug,

@@ -3,6 +3,8 @@
  * Tambah catatan internal admin pada RFQ.
  */
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import type { CookieMethodsServer } from "@supabase/ssr";
 import { addAdminNote } from "@/services/rfq.service";
 import { z } from "zod";
 
@@ -40,10 +42,7 @@ export async function POST(
     await addAdminNote({
       rfqId: id,
       note: parsedBody.data.note,
-      cookies: (() => {
-        const { cookies } = require("next/headers");
-        return cookies();
-      })() as any,
+      cookies: cookies as unknown as () => CookieMethodsServer,
     });
 
     return NextResponse.json({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -79,11 +79,7 @@ export default function Katalog() {
 
   const PAGE_SIZE = 9;
 
-  useEffect(() => {
-    loadData();
-  }, [categoryFilter, query]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       let products: Product[] = [];
@@ -111,7 +107,11 @@ export default function Katalog() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [categoryFilter, query]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const totalPages = Math.max(Math.ceil(products.length / PAGE_SIZE), 1);
   const currentPage = Math.min(page, totalPages);

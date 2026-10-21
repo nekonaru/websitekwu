@@ -3,6 +3,8 @@
  * Daftar RFQ untuk admin dengan filter dan pagination.
  */
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import type { CookieMethodsServer } from "@supabase/ssr";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
 import { z } from "zod";
 
@@ -34,10 +36,7 @@ export async function GET(req: Request) {
     }
 
     const result = await getAllRfqsAdmin({
-      cookies: (() => {
-        const { cookies } = require("next/headers");
-        return cookies();
-      })() as any,
+      cookies: cookies as unknown as () => CookieMethodsServer,
       status: parsed.data.status,
       search: parsed.data.search,
       page: parsed.data.page,

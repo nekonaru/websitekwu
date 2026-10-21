@@ -3,6 +3,8 @@
  * Perbarui status RFQ dengan transisi sah (admin only).
  */
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import type { CookieMethodsServer } from "@supabase/ssr";
 import { updateRfqStatusAdmin } from "@/services/rfq.service";
 import { z } from "zod";
 
@@ -52,10 +54,7 @@ export async function PATCH(
       rfqId: id,
       newStatus: parsedBody.data.status,
       note: parsedBody.data.note,
-      cookies: (() => {
-        const { cookies } = require("next/headers");
-        return cookies();
-      })() as any,
+      cookies: cookies as unknown as () => CookieMethodsServer,
     });
 
     return NextResponse.json({

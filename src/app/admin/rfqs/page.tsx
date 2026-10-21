@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, Filter, Plus } from "lucide-react";
 import { formatRupiah, formatDate } from "@/lib/format";
@@ -29,11 +29,7 @@ export default function AdminRfqs() {
     pageSize: 10,
   });
 
-  useEffect(() => {
-    loadRfqs();
-  }, [filters]);
-
-  async function loadRfqs() {
+  const loadRfqs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -53,7 +49,11 @@ export default function AdminRfqs() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filters]);
+
+  useEffect(() => {
+    loadRfqs();
+  }, [loadRfqs]);
 
   const totalPages = Math.max(Math.ceil(total / filters.pageSize), 1);
 
