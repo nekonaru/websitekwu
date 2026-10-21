@@ -33,7 +33,7 @@ export default async function RfqConfirmation({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/katalog"
-            className="px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+            className="px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
           >
             Belanja Lagi
           </Link>

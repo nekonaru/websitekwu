@@ -95,7 +95,7 @@ export default function Tentang() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl bg-gradient-to-br from-orange-600 to-blue-600 p-6 text-center md:p-8">
+      <div className="mt-8 rounded-2xl bg-gradient-to-br from-orange-700 to-blue-700 p-6 text-center md:p-8">
         <p className="mb-4 text-lg font-bold text-white md:text-xl">
           Masih ada pertanyaan tentang KWU?
         </p>

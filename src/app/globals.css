@@ -69,11 +69,13 @@
   --color-info-600: #2563eb;
   --color-info-800: #1e40af;
 
-  /* ----- Warna semantik UI ----- */
-  --color-primary: var(--color-orange-600);
-  --color-primary-hover: var(--color-orange-500);
+  /* ----- Warna semantik UI -----
+     primary memakai orange-700 agar teks putih di atasnya mencapai
+     rasio kontras 5.18:1 (melewati WCAG AA untuk teks normal). */
+  --color-primary: var(--color-orange-700);
+  --color-primary-hover: var(--color-orange-800);
   --color-primary-soft: var(--color-orange-50);
-  --color-secondary: var(--color-blue-600);
+  --color-secondary: var(--color-blue-700);
   --color-secondary-soft: var(--color-blue-50);
   --color-surface: #ffffff;
   --color-surface-muted: var(--color-neutral-50);
@@ -173,9 +175,9 @@ p {
   text-wrap: pretty;
 }
 
-/* Placeholder formulir tetap terbaca */
+/* Placeholder formulir tetap terbaca (rasio kontras 4.8:1) */
 ::placeholder {
-  color: var(--color-neutral-400);
+  color: var(--color-neutral-500);
   opacity: 1;
 }
 

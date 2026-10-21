@@ -366,7 +366,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-xl bg-primary text-white text-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-orange-500/25"
+          className="w-full py-4 rounded-xl bg-primary text-white text-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-orange-700/25"
         >
           {loading ? (
             <>

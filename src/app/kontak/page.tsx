@@ -142,7 +142,7 @@ export default function Kontak() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl bg-gradient-to-br from-orange-600 to-blue-600 p-6 text-center md:p-8">
+      <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl bg-gradient-to-br from-orange-700 to-blue-700 p-6 text-center md:p-8">
         <p className="text-lg font-bold text-white md:text-xl">
           Sudah punya kebutuhan grosir?
         </p>

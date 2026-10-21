@@ -93,7 +93,7 @@ export default function PesananSaya() {
           <p className="text-muted mb-4">Belum ada pesanan.</p>
           <Link
             href="/katalog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
           >
             Belanja Sekarang
           </Link>

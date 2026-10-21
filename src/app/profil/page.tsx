@@ -100,7 +100,7 @@ export default function Profil() {
           <p className="text-muted mb-6">Silakan masuk untuk mengakses profil.</p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
           >
             Masuk <ArrowRight className="h-4 w-4" />
           </Link>
@@ -149,7 +149,7 @@ export default function Profil() {
                 <p className="text-muted">Belum ada pesanan.</p>
                 <Link
                   href="/katalog"
-                  className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
                 >
                   Belanja Sekarang <ArrowRight className="h-4 w-4" />
                 </Link>

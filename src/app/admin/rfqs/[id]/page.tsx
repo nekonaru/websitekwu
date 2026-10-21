@@ -546,7 +546,7 @@ export default function AdminRfqDetail({
               <button
                 type="submit"
                 disabled={busy || !newNote.trim()}
-                className="w-full py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-orange-500 transition-colors disabled:opacity-60"
+                className="w-full py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors disabled:opacity-60"
               >
                 Simpan Catatan
               </button>
@@ -565,7 +565,7 @@ export default function AdminRfqDetail({
               </p>
               <button
                 onClick={() => setOpenQuotationForm(true)}
-                className="w-full py-3 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+                className="w-full py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
               >
                 Buat Quotation Baru
               </button>
@@ -866,7 +866,7 @@ export default function AdminRfqDetail({
                 <button
                   type="submit"
                   disabled={busy}
-                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors disabled:opacity-60"
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover transition-colors disabled:opacity-60"
                 >
                   Terbitkan Quotation
                 </button>
@@ -885,7 +885,7 @@ const TONE_CLASSES: Record<StatusButtonTone, string> = {
   default:
     "w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors",
   primary:
-    "w-full py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors",
+    "w-full py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary-hover transition-colors",
   success:
     "w-full py-2.5 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors",
   danger:

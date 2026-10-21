@@ -106,7 +106,7 @@ export default function Home() {
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <Link
                   href="/katalog"
-                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-7 py-4 text-base font-bold text-white shadow-xl shadow-orange-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-2xl hover:shadow-orange-500/35 active:translate-y-0 sm:text-lg"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-300 px-7 py-4 text-base font-bold text-orange-950 shadow-xl shadow-orange-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-200 hover:shadow-2xl hover:shadow-orange-500/30 active:translate-y-0 sm:text-lg"
                 >
                   Lihat Katalog
                   <ArrowRight
@@ -366,7 +366,7 @@ export default function Home() {
       {/* ================= PENUTUP ================= */}
       <section className="px-4 pb-16 sm:px-6 md:pb-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 via-orange-500 to-blue-600 px-6 py-12 text-center shadow-2xl md:px-12 md:py-16">
+          <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-orange-700 via-orange-700 to-blue-700 px-6 py-12 text-center shadow-2xl md:px-12 md:py-16">
             <div
               className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/15 blur-3xl"
               aria-hidden="true"

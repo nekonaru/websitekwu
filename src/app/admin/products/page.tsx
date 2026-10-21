@@ -170,7 +170,7 @@ export default function AdminProducts() {
             });
             setOpenForm(true);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors shadow-md shadow-orange-200"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover transition-colors shadow-md shadow-orange-200"
         >
           <Plus className="h-4 w-4" /> Tambah Produk
         </button>
@@ -361,7 +361,7 @@ export default function AdminProducts() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 disabled:opacity-60 transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover disabled:opacity-60 transition-colors"
                 >
                   {saving ? "Menyimpan..." : "Simpan Produk"}
                 </button>
