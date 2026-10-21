@@ -3,25 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, LogIn, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { getErrorMessage } from "@/lib/format";
+import { FormField } from "@/components/ui/form-field";
+import { AuthShell } from "@/components/ui/auth-shell";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [sukses, setSukses] = useState<string | null>(null);
   const router = useRouter();
-
-  const supabase = createBrowserSupabaseClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setError(null);
+    setSukses(null);
     setLoading(true);
 
     try {
+      const supabase = createBrowserSupabaseClient();
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -29,8 +32,18 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl") || "/";
+      const params = new URLSearchParams(window.location.search);
+      const callbackUrl = params.get("callbackUrl") || "/";
+      const baruMasuk = params.get("registered") === "1";
+
+      if (baruMasuk) {
+        setSukses("Akun berhasil dibuat. Silakan masuk dengan data Anda.");
+        setLoading(false);
+        return;
+      }
+
       router.push(callbackUrl);
+      router.refresh();
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Gagal masuk. Periksa email dan kata sandi."));
     } finally {
@@ -39,73 +52,82 @@ export default function Login() {
   }
 
   return (
-    <section className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-white border border-border rounded-2xl p-8 md:p-10 shadow-lg">
-        <div className="text-center mb-8">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white mb-4">
-            <Mail className="h-5 w-5" />
-          </div>
-          <h1 className="text-2xl font-bold text-heading mb-2">Masuk ke Akun</h1>
-          <p className="text-muted">Selamat datang kembali ke KWU.</p>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3">
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-heading mb-1">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden="true" />
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-border rounded-xl text-heading focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="nama@contoh.com"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-heading mb-1">
-              Kata Sandi
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden="true" />
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-border rounded-xl text-heading focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-lg hover:bg-primary-hover transition-all shadow-md shadow-orange-200 disabled:opacity-60"
-          >
-            {loading ? "Masuk..." : "Masuk"}
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-sm text-muted">
+    <AuthShell
+      icon={LogIn}
+      judul="Masuk ke Akun"
+      deskripsi="Selamat datang kembali ke KWU."
+      pesan={error ?? sukses}
+      pesanTipe={error ? "error" : "success"}
+      bawah={
+        <>
           Belum punya akun?{" "}
-          <Link href="/register" className="text-primary hover:underline font-medium">
+          <Link
+            href="/register"
+            className="font-semibold text-primary transition-colors duration-200 hover:text-primary-hover hover:underline"
+          >
             Daftar sekarang
           </Link>
-        </p>
-      </div>
-    </section>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <FormField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          icon={Mail}
+          required
+          autoComplete="email"
+          placeholder="nama@contoh.com"
+        />
+
+        <FormField
+          label="Kata Sandi"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          icon={Lock}
+          required
+          autoComplete="current-password"
+          placeholder="Masukkan kata sandi"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-bold text-white shadow-lg shadow-orange-200 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              Memproses...
+            </>
+          ) : (
+            "Masuk"
+          )}
+        </button>
+
+        {error && (
+          <p className="flex items-start justify-center gap-1.5 text-center text-xs text-muted">
+            <AlertCircle
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            />
+            Pastikan email dan kata sandi sudah benar.
+          </p>
+        )}
+
+        {sukses && (
+          <p className="flex items-start justify-center gap-1.5 text-center text-xs text-success-700">
+            <CheckCircle2
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            />
+            Masukkan kredensial Anda untuk melanjutkan.
+          </p>
+        )}
+      </form>
+    </AuthShell>
   );
 }

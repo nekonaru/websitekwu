@@ -3,9 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, LogOut, ArrowRight } from "lucide-react";
+import {
+  User,
+  LogOut,
+  ArrowRight,
+  ShoppingBag,
+} from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatDate } from "@/lib/format";
+import {
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from "@/types/rfq";
 
 interface ProfileUser {
   id: string;
@@ -24,6 +33,16 @@ interface ProfileOrder {
   status: string;
   created_at: string;
 }
+
+const WAKTU_STATUS: Record<string, string> = {
+  pending: "bg-warning-50 text-warning-800",
+  paid: "bg-info-50 text-info-800",
+  processing: "bg-info-50 text-info-800",
+  shipped: "bg-orange-50 text-orange-700",
+  delivered: "bg-success-50 text-success-800",
+  cancelled: "bg-danger-50 text-danger-700",
+  refunded: "bg-neutral-100 text-neutral-700",
+};
 
 export default function Profil() {
   const [user, setUser] = useState<ProfileUser | null>(null);
@@ -110,91 +129,112 @@ export default function Profil() {
   }
 
   return (
-    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-heading mb-2">Profil Saya</h1>
-        <p className="text-muted">Kelola akun dan riwayat pesanan Anda.</p>
+        <h1 className="text-2xl font-bold text-heading md:text-3xl">
+          Profil Saya
+        </h1>
+        <p className="mt-1 text-muted">
+          Kelola akun dan riwayat pesanan Anda.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid gap-6 lg:grid-cols-[20rem_1fr] lg:gap-8">
         {/* Informasi akun */}
-        <div className="lg:col-span-1">
-          <div className="bg-white border border-border rounded-2xl p-6">
-            <div className="flex flex-col items-center mb-6">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3 overflow-hidden">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
+            <div className="mb-6 flex flex-col items-center text-center">
+              <span
+                className="mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-2xl font-extrabold text-primary"
+                aria-hidden="true"
+              >
                 {(user.user_metadata?.full_name || user.email || "U")
                   .split(" ")
                   .map((n: string) => n[0])
                   .join("")
-                  .toUpperCase()}
-              </div>
-              <h2 className="font-bold text-heading">{user.user_metadata?.full_name || "Pengguna"}</h2>
-              <p className="text-sm text-muted">{user.email}</p>
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </span>
+              <h2 className="font-bold text-heading">
+                {user.user_metadata?.full_name || "Pengguna"}
+              </h2>
+              <p className="mt-0.5 break-all text-sm text-muted">
+                {user.email}
+              </p>
             </div>
+
             <button
+              type="button"
               onClick={handleSignOut}
-              className="w-full py-3 rounded-xl border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-danger-200 py-3 text-sm font-semibold text-danger-600 transition-colors duration-200 hover:bg-danger-50"
             >
-              <LogOut className="h-4 w-4" /> Keluar
+              <LogOut className="h-4 w-4" aria-hidden="true" /> Keluar dari
+              Akun
             </button>
           </div>
-        </div>
+        </aside>
 
         {/* Riwayat pesanan */}
-        <div className="lg:col-span-2">
-          <h2 className="font-bold text-heading mb-4">Riwayat Pesanan</h2>
-          <div className="bg-white border border-border rounded-xl p-6">
+        <div className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-heading">Riwayat Pesanan</h2>
+            <Link
+              href="/pesanan-saya"
+              className="text-sm font-semibold text-primary transition-colors duration-200 hover:text-primary-hover hover:underline"
+            >
+              Lihat semua
+            </Link>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-white shadow-soft">
             {orders.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted">Belum ada pesanan.</p>
+              <div className="px-6 py-14 text-center">
+                <ShoppingBag
+                  className="mx-auto mb-4 h-10 w-10 text-muted"
+                  aria-hidden="true"
+                />
+                <p className="mb-1 font-bold text-heading">Belum ada pesanan</p>
+                <p className="mb-6 text-sm text-muted">
+                  Pesanan yang Anda buat akan tampil di sini.
+                </p>
                 <Link
                   href="/katalog"
-                  className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-primary-hover"
                 >
-                  Belanja Sekarang <ArrowRight className="h-4 w-4" />
+                  Belanja Sekarang
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-neutral-50">
-                    <th className="px-6 py-3 text-sm font-semibold text-muted">Nomor Pesanan</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Total</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((o) => (
-                    <tr key={o.id} className="border-b border-border last:border-0">
-                      <td className="px-6 py-4 text-sm font-medium text-heading">
+              <ul className="divide-y divide-border">
+                {orders.map((o) => (
+                  <li
+                    key={o.id}
+                    className="flex flex-wrap items-center justify-between gap-3 p-4 transition-colors duration-200 hover:bg-surface-muted sm:p-5"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-heading">
                         {o.order_number}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-primary text-right">
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {formatDate(o.created_at)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${WAKTU_STATUS[o.status] ?? "bg-neutral-100 text-neutral-700"}`}
+                      >
+                        {ORDER_STATUS_LABELS[o.status as OrderStatus] ??
+                          o.status.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-sm font-bold text-primary">
                         {formatRupiah(o.total)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted text-center">
-                        {new Date(o.created_at).toLocaleDateString("id-ID")}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-center">
-                        <span
-                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                            o.status === "delivered"
-                              ? "bg-green-50 text-green-600"
-                              : o.status === "processing" || o.status === "paid"
-                                ? "bg-blue-50 text-blue-600"
-                                : o.status === "pending"
-                                  ? "bg-amber-50 text-amber-600"
-                                  : "bg-neutral-50 text-neutral-600"
-                          }`}
-                        >
-                          {o.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
