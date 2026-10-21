@@ -3,10 +3,11 @@
  * Buat quotation baru untuk RFQ (admin only).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { createQuotation } from "@/services/quotation.service";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 const quotationItemSchema = z.object({
   rfqItemId: z.string().optional(),
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
 
     const result = await createQuotation({
       input: parsed.data,
-      cookies: cookies as unknown as () => CookieMethodsServer,
+      cookies: cookies as unknown as () => SupabaseCookieStore,
     });
 
     return NextResponse.json(
@@ -52,10 +53,10 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("POST /api/quotations error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal membuat quotation" },
+      { success: false, error: getErrorMessage(err, "Gagal membuat quotation") },
       { status: 400 }
     );
   }

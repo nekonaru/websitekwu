@@ -3,10 +3,11 @@
  * Tambah catatan internal admin pada RFQ.
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { addAdminNote } from "@/services/rfq.service";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -42,17 +43,17 @@ export async function POST(
     await addAdminNote({
       rfqId: id,
       note: parsedBody.data.note,
-      cookies: cookies as unknown as () => CookieMethodsServer,
+      cookies: cookies as unknown as () => SupabaseCookieStore,
     });
 
     return NextResponse.json({
       success: true,
       data: { message: "Catatan internal berhasil ditambahkan" },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("POST /api/rfqs/[id]/notes error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal menambah catatan" },
+      { success: false, error: getErrorMessage(err, "Gagal menambah catatan") },
       { status: 400 }
     );
   }

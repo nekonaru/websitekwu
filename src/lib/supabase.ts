@@ -10,13 +10,24 @@ import {
   createBrowserClient,
   createServerClient,
   isBrowser,
+  type CookieMethodsServer,
 } from "@supabase/ssr";
 
-const emptyCookieStore: any = {
-  get: () => undefined,
+/**
+ * Toko cookie minimal yang dibutuhkan Supabase SSR.
+ * Structur ini selaras dengan cookies() milik Next.js 15+ maupun
+ * cookie store kustom yang dibuat sendiri.
+ */
+export interface SupabaseCookieStore {
+  getAll(): Promise<{ name: string; value: string }[] | null> | { name: string; value: string }[];
+  set(name: string, value: string, options?: unknown): void | Promise<void>;
+  remove?(name: string, options?: unknown): void | Promise<void>;
+}
+
+const emptyCookieStore: SupabaseCookieStore = {
+  getAll: () => [],
   set: () => {},
   remove: () => {},
-  getAll: () => [],
 };
 
 /**
@@ -30,13 +41,32 @@ export function createBrowserSupabaseClient() {
     return createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: emptyCookieStore }
+      { cookies: emptyCookieStore as unknown as CookieMethodsServer }
     );
   }
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+}
+
+/**
+ * Ubah objek cookies() milik Next.js menjadi toko cookie Supabase.
+ *NEXT.js memakai bentuk signature yang berbeda dari @supabase/ssr,
+ * jadi adaptasi dilakukan di satu tempat saja.
+ */
+export function toSupabaseCookieStore(cookies: unknown): SupabaseCookieStore {
+  const store = cookies as {
+    getAll: () => { name: string; value: string }[];
+    set: (name: string, value: string, options?: unknown) => unknown;
+  };
+
+  return {
+    getAll: () => store.getAll(),
+    set: (name, value, options) => {
+      store.set(name, value, options);
+    },
+  };
 }
 
 /**
@@ -48,12 +78,14 @@ export function createBrowserSupabaseClient() {
  * Jika env vars belum di-set (belum dikonfigurasi), tetap mengembalikan klien
  * agar build tidak gagal; operasi data akan gagal runtime saat dipanggil.
  */
-export async function createServerSupabaseClient(cookies: any) {
+export async function createServerSupabaseClient(
+  cookies: SupabaseCookieStore | Promise<SupabaseCookieStore>
+) {
   const cookieStore = await cookies;
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookieStore }
+    { cookies: cookieStore as unknown as CookieMethodsServer }
   );
 }
 
@@ -66,7 +98,7 @@ export function createServiceSupabaseClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: emptyCookieStore }
+    { cookies: emptyCookieStore as unknown as CookieMethodsServer }
   );
 }
 

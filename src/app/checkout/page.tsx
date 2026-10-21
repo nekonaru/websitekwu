@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/contexts/cart-context";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, getErrorMessage } from "@/lib/format";
 import { z } from "zod";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 
@@ -89,10 +89,10 @@ export default function Checkout() {
         text: `Pesanan ${data.data.orderNumber} berhasil dibuat.`,
       });
       clear();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessage({
         type: "error",
-        text: err?.message ?? "Gagal membuat pesanan. Coba lagi.",
+        text: getErrorMessage(err, "Gagal membuat pesanan. Coba lagi."),
       });
     } finally {
       setSubmitting(false);

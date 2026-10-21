@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, AlertCircle } from "lucide-react";
@@ -30,8 +31,8 @@ export default function Login() {
 
       const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl") || "/";
       router.push(callbackUrl);
-    } catch (err: any) {
-      setError(err.message ?? "Gagal masuk. Periksa email dan kata sandi.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Gagal masuk. Periksa email dan kata sandi."));
     } finally {
       setLoading(false);
     }

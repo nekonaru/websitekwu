@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { formatRupiah, formatDate } from "@/lib/format";
@@ -49,8 +50,8 @@ export default function AdminOrders() {
       });
       if (!res.ok) throw new Error("Gagal mengubah status");
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    } catch (err: any) {
-      alert(err.message ?? "Gagal mengubah status");
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, "Gagal mengubah status"));
     }
   }
 

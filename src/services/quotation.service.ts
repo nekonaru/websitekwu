@@ -6,8 +6,8 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export interface Quotation {
   id: string;
@@ -40,6 +40,77 @@ export interface QuotationItem {
 
 export interface QuotationWithItems extends Quotation {
   items: QuotationItem[];
+}
+
+/** Bentuk baris tabel `quotations` di database Supabase. */
+interface QuotationRow {
+  id: string;
+  rfq_id: string;
+  quotation_number: string;
+  version: number;
+  created_by: string | null;
+  valid_until: string;
+  status: string;
+  subtotal: number;
+  shipping_cost: number;
+  discount: number;
+  total: number;
+  terms: string | null;
+  created_at: string;
+  updated_at: string;
+  quotation_items?: QuotationItemRow[] | null;
+}
+
+/** Bentuk baris tabel `quotation_items` di database Supabase. */
+interface QuotationItemRow {
+  id: string;
+  quotation_id: string;
+  rfq_item_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+}
+
+/** Periksa apakah pengguna yang login berperan sebagai admin. */
+function isAdminUser(user: unknown): boolean {
+  if (!user || typeof user !== "object") return false;
+  const metadata = (user as { user_metadata?: { role?: string } | null })
+    .user_metadata;
+  return metadata?.role === "admin";
+}
+
+/** Ubah baris database menjadi objek quotation beserta itemnya. */
+function toQuotationWithItems(row: QuotationRow): QuotationWithItems {
+  return {
+    id: row.id,
+    rfq_id: row.rfq_id,
+    quotation_number: row.quotation_number,
+    version: row.version,
+    created_by: row.created_by,
+    valid_until: row.valid_until,
+    status: row.status,
+    subtotal: row.subtotal,
+    shipping_cost: row.shipping_cost,
+    discount: row.discount,
+    total: row.total,
+    terms: row.terms,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    items: (row.quotation_items ?? []).map((i) => ({
+      id: i.id,
+      quotation_id: i.quotation_id,
+      rfq_item_id: i.rfq_item_id,
+      product_name: i.product_name,
+      quantity: i.quantity,
+      unit: i.unit,
+      unit_price: i.unit_price,
+      total_price: i.total_price,
+      created_at: i.created_at,
+    })),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -83,7 +154,7 @@ export async function createQuotation({
   cookies,
 }: {
   input: CreateQuotationInput;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<{
   quotationNumber: string;
   version: number;
@@ -102,7 +173,7 @@ export async function createQuotation({
     throw new Error("Autentikasi diperlukan");
   }
 
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
   if (!isAdmin) {
     throw new Error("Hanya admin yang dapat membuat quotation");
   }
@@ -230,7 +301,7 @@ export async function getQuotationsByRfq({
   cookies,
 }: {
   rfqId: string;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<QuotationWithItems[]> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -242,33 +313,7 @@ export async function getQuotationsByRfq({
 
   if (error) throw error;
 
-  return (data ?? []).map((q: any) => ({
-    id: q.id,
-    rfq_id: q.rfq_id,
-    quotation_number: q.quotation_number,
-    version: q.version,
-    created_by: q.created_by,
-    valid_until: q.valid_until,
-    status: q.status,
-    subtotal: q.subtotal,
-    shipping_cost: q.shipping_cost,
-    discount: q.discount,
-    total: q.total,
-    terms: q.terms,
-    created_at: q.created_at,
-    updated_at: q.updated_at,
-    items: (q.quotation_items ?? []).map((i: any) => ({
-      id: i.id,
-      quotation_id: i.quotation_id,
-      rfq_item_id: i.rfq_item_id,
-      product_name: i.product_name,
-      quantity: i.quantity,
-      unit: i.unit,
-      unit_price: i.unit_price,
-      total_price: i.total_price,
-      created_at: i.created_at,
-    })),
-  }));
+  return (data ?? []).map((q: QuotationRow) => toQuotationWithItems(q));
 }
 
 /** Ambil semua quotation (admin only). */
@@ -282,33 +327,7 @@ export async function getAllQuotationsAdmin(): Promise<QuotationWithItems[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((q: any) => ({
-    id: q.id,
-    rfq_id: q.rfq_id,
-    quotation_number: q.quotation_number,
-    version: q.version,
-    created_by: q.created_by,
-    valid_until: q.valid_until,
-    status: q.status,
-    subtotal: q.subtotal,
-    shipping_cost: q.shipping_cost,
-    discount: q.discount,
-    total: q.total,
-    terms: q.terms,
-    created_at: q.created_at,
-    updated_at: q.updated_at,
-    items: (q.quotation_items ?? []).map((i: any) => ({
-      id: i.id,
-      quotation_id: i.quotation_id,
-      rfq_item_id: i.rfq_item_id,
-      product_name: i.product_name,
-      quantity: i.quantity,
-      unit: i.unit,
-      unit_price: i.unit_price,
-      total_price: i.total_price,
-      created_at: i.created_at,
-    })),
-  }));
+  return (data ?? []).map((q: QuotationRow) => toQuotationWithItems(q));
 }
 
 /* ------------------------------------------------------------------ */
@@ -383,8 +402,9 @@ export async function convertQuotationToOrder({
   }
 
   // Hitung total
-  const subtotal = quotation.quotation_items.reduce(
-    (sum: number, i: any) => sum + i.unit_price * i.quantity,
+  const quotationItems = (quotation.quotation_items ?? []) as QuotationItemRow[];
+  const subtotal = quotationItems.reduce(
+    (sum: number, i) => sum + i.unit_price * i.quantity,
     0
   );
   const shippingCost = quotation.shipping_cost ?? 0;
@@ -423,7 +443,7 @@ export async function convertQuotationToOrder({
   const { error: itemsError } = await supabase
     .from("order_items")
     .insert(
-      quotation.quotation_items.map((i: any) => ({
+      quotationItems.map((i) => ({
         order_id: order.id,
         product_id: null,
         product_name: i.product_name,

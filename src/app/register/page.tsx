@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, AlertCircle } from "lucide-react";
@@ -43,8 +44,8 @@ export default function Register() {
 
       setError("");
       router.push("/login?registered=1");
-    } catch (err: any) {
-      setError(err.message ?? "Gagal mendaftar. Coba lagi.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Gagal mendaftar. Coba lagi."));
     } finally {
       setLoading(false);
     }

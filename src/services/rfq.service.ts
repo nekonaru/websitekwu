@@ -6,8 +6,8 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { getQuotationsByRfq as getQuotationsByRfqFromQuotation } from "@/services/quotation.service";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export { getQuotationsByRfqFromQuotation as getQuotationsByRfq };
 
@@ -53,6 +53,56 @@ export interface RfqWithItems extends Rfq {
   history: RfqStatusHistory[];
 }
 
+/** Bentuk baris tabel `rfqs` di database Supabase. */
+interface RfqRow {
+  id: string;
+  rfq_number: string;
+  organization_name: string;
+  contact_name: string;
+  business_email: string;
+  delivery_location: string;
+  required_date: string;
+  status: string;
+  created_by: string | null;
+  assigned_to: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  rfq_items?: RfqItemRow[] | null;
+  rfq_status_history?: RfqStatusHistoryRow[] | null;
+}
+
+/** Bentuk baris tabel `rfq_items` di database Supabase. */
+interface RfqItemRow {
+  id: string;
+  rfq_id: string;
+  product_id: string | null;
+  product_name: string;
+  product_details: string;
+  quantity: number;
+  unit: string;
+  created_at: string;
+}
+
+/** Bentuk baris tabel `rfq_status_history` di database Supabase. */
+interface RfqStatusHistoryRow {
+  id: string;
+  rfq_id: string;
+  old_status: string | null;
+  new_status: string;
+  changed_by: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+/** Periksa apakah pengguna yang login berperan sebagai admin. */
+function isAdminUser(user: unknown): boolean {
+  if (!user || typeof user !== "object") return false;
+  const metadata = (user as { user_metadata?: { role?: string } | null })
+    .user_metadata;
+  return metadata?.role === "admin";
+}
+
 /* ------------------------------------------------------------------ */
 /* Ambil daftar RFQ (admin)                                           */
 /* ------------------------------------------------------------------ */
@@ -65,7 +115,7 @@ export async function getAllRfqsAdmin({
   page = 1,
   pageSize = 10,
 }: {
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
   status?: string;
   search?: string;
   page?: number;
@@ -112,7 +162,7 @@ export async function getAllRfqsAdmin({
   if (error) throw error;
 
   return {
-    rfqs: (data ?? []).map((r: any) => ({
+    rfqs: (data ?? []).map((r: RfqRow) => ({
       id: r.id,
       rfq_number: r.rfq_number,
       organization_name: r.organization_name,
@@ -141,7 +191,7 @@ export async function getRfqById({
   cookies,
 }: {
   id: string;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<RfqWithItems | null> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -154,15 +204,13 @@ export async function getRfqById({
     throw new Error("Autentikasi diperlukan");
   }
 
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("rfqs")
     .select("*, rfq_items(*), rfq_status_history(*)")
     .eq("id", id)
     .single();
-
-  const { data, error } = await query;
 
   if (error || !data) return null;
 
@@ -171,7 +219,7 @@ export async function getRfqById({
     return null;
   }
 
-  const r = data as any;
+  const r = data as RfqRow;
   return {
     id: r.id,
     rfq_number: r.rfq_number,
@@ -186,7 +234,7 @@ export async function getRfqById({
     admin_notes: r.admin_notes,
     created_at: r.created_at,
     updated_at: r.updated_at,
-    items: (r.rfq_items ?? []).map((i: any) => ({
+    items: (r.rfq_items ?? []).map((i: RfqItemRow) => ({
       id: i.id,
       rfq_id: i.rfq_id,
       product_id: i.product_id,
@@ -196,7 +244,7 @@ export async function getRfqById({
       unit: i.unit,
       created_at: i.created_at,
     })),
-    history: (r.rfq_status_history ?? []).map((h: any) => ({
+    history: (r.rfq_status_history ?? []).map((h: RfqStatusHistoryRow) => ({
       id: h.id,
       rfq_id: h.rfq_id,
       old_status: h.old_status,
@@ -235,7 +283,7 @@ export async function updateRfqStatusAdmin({
   rfqId: string;
   newStatus: string;
   note?: string;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<{ oldStatus: string; newStatus: string }> {
   const supabase = await createServerSupabaseClient(cookies());
   const serviceClient = createServiceSupabaseClient();
@@ -250,7 +298,7 @@ export async function updateRfqStatusAdmin({
     throw new Error("Autentikasi diperlukan");
   }
 
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
   if (!isAdmin) {
     throw new Error("Hanya admin yang dapat mengubah status RFQ");
   }
@@ -318,7 +366,7 @@ export async function addAdminNote({
 }: {
   rfqId: string;
   note: string;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<void> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -332,7 +380,7 @@ export async function addAdminNote({
     throw new Error("Autentikasi diperlukan");
   }
 
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
   if (!isAdmin) {
     throw new Error("Hanya admin yang dapat menambah catatan");
   }

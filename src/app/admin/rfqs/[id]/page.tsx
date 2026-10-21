@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -147,8 +148,8 @@ export default function AdminRfqDetail({
         text: `Status diubah menjadi ${STATUS_LABEL(newStatus)}`,
       });
       await loadRfq(rfq.id);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal mengubah status" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal mengubah status") });
     } finally {
       setBusy(false);
     }
@@ -171,8 +172,8 @@ export default function AdminRfqDetail({
       setNewNote("");
       setMessage({ type: "success", text: "Catatan berhasil ditambahkan" });
       await loadRfq(rfq.id);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal menambah catatan" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal menambah catatan") });
     } finally {
       setBusy(false);
     }
@@ -219,8 +220,8 @@ export default function AdminRfqDetail({
       });
       setOpenQuotationForm(false);
       await loadRfq(rfq.id);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal membuat quotation" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal membuat quotation") });
     } finally {
       setBusy(false);
     }
@@ -239,8 +240,8 @@ export default function AdminRfqDetail({
       }
       setMessage({ type: "success", text: "Quotation berhasil dikonversi" });
       if (rfq) await loadRfq(rfq.id);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal mengonversi quotation" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal mengonversi quotation") });
     }
   }
 

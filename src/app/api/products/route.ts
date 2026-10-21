@@ -3,6 +3,7 @@
  * Daftar produk publik (dengan filter kategori dan pencarian).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import {
   getPublishedProducts,
   searchProducts,
@@ -25,10 +26,10 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ success: true, data: products });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/products error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memuat produk" },
+      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
       { status: 500 }
     );
   }

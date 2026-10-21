@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import { Plus, Trash2, Edit, Search } from "lucide-react";
 import { formatRupiah } from "@/lib/format";
@@ -94,8 +95,8 @@ export default function AdminProducts() {
         isFeatured: false, isDraft: false,
       });
       await loadProducts();
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal menyimpan produk" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal menyimpan produk") });
     } finally {
       setSaving(false);
     }
@@ -113,8 +114,8 @@ export default function AdminProducts() {
       }
       setMessage({ type: "success", text: "Produk berhasil dihapus" });
       await loadProducts();
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message ?? "Gagal menghapus produk" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: getErrorMessage(err, "Gagal menghapus produk") });
     }
   }
 

@@ -3,12 +3,15 @@
  * Daftar RFQ milik pengguna yang terautentikasi.
  */
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import {
+  createServerSupabaseClient,
+  toSupabaseCookieStore,
+} from "@/lib/supabase";
 import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient(cookies());
+    const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const { data, error } = await supabase
       .from("rfqs")
       .select("*, rfq_items(*)")

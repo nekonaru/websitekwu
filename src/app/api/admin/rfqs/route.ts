@@ -3,10 +3,11 @@
  * Daftar RFQ untuk admin dengan filter dan pagination.
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 const querySchema = z.object({
   status: z.string().optional(),
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
     }
 
     const result = await getAllRfqsAdmin({
-      cookies: cookies as unknown as () => CookieMethodsServer,
+      cookies: cookies as unknown as () => SupabaseCookieStore,
       status: parsed.data.status,
       search: parsed.data.search,
       page: parsed.data.page,
@@ -44,10 +45,10 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ success: true, data: result });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/admin/rfqs error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memuat daftar RFQ" },
+      { success: false, error: getErrorMessage(err, "Gagal memuat daftar RFQ") },
       { status: 500 }
     );
   }

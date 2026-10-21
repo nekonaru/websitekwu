@@ -3,6 +3,7 @@
  * Perbarui status quotation (admin only).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { updateQuotationStatusAdmin } from "@/services/quotation.service";
 import { z } from "zod";
 
@@ -46,10 +47,10 @@ export async function PATCH(
       success: true,
       data: { id, status: result.status },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("PATCH /api/quotations/[id]/status error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memperbarui status quotation" },
+      { success: false, error: getErrorMessage(err, "Gagal memperbarui status quotation") },
       { status: 400 }
     );
   }

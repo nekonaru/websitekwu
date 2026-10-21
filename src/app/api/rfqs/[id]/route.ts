@@ -3,9 +3,10 @@
  * Detail RFQ beserta item, riwayat status, dan daftar quotation.
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { getRfqById, getQuotationsByRfq } from "@/services/rfq.service";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export async function GET(
   _req: Request,
@@ -14,7 +15,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const cookieStore = cookies as unknown as () => CookieMethodsServer;
+    const cookieStore = cookies as unknown as () => SupabaseCookieStore;
 
     const rfq = await getRfqById({ id, cookies: cookieStore });
 
@@ -34,10 +35,10 @@ export async function GET(
       success: true,
       data: { ...rfq, quotations },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/rfqs/[id] error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memuat detail RFQ" },
+      { success: false, error: getErrorMessage(err, "Gagal memuat detail RFQ") },
       { status: 400 }
     );
   }

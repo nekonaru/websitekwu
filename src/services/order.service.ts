@@ -7,8 +7,8 @@ import {
   createServiceSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export interface Order {
   id: string;
@@ -44,6 +44,83 @@ export interface OrderItem {
 
 export interface OrderWithItems extends Order {
   items: OrderItem[];
+}
+
+/** Bentuk baris tabel `orders` di database Supabase. */
+interface OrderRow {
+  id: string;
+  order_number: string;
+  user_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  delivery_address: string;
+  subtotal: number;
+  shipping_cost: number;
+  tax: number;
+  total: number;
+  status: string;
+  payment_method: string | null;
+  payment_proof_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  order_items?: OrderItemRow[] | null;
+}
+
+/** Bentuk baris tabel `order_items` di database Supabase. */
+interface OrderItemRow {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  product_sku: string | null;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+}
+
+/** Periksa apakah pengguna yang login berperan sebagai admin. */
+function isAdminUser(user: unknown): boolean {
+  if (!user || typeof user !== "object") return false;
+  const metadata = (user as { user_metadata?: { role?: string } | null })
+    .user_metadata;
+  return metadata?.role === "admin";
+}
+
+/** Ubah baris database menjadi objek pesanan beserta itemnya. */
+function toOrderWithItems(row: OrderRow): OrderWithItems {
+  return {
+    id: row.id,
+    order_number: row.order_number,
+    user_id: row.user_id,
+    customer_name: row.customer_name,
+    customer_email: row.customer_email,
+    customer_phone: row.customer_phone,
+    delivery_address: row.delivery_address,
+    subtotal: row.subtotal,
+    shipping_cost: row.shipping_cost,
+    tax: row.tax,
+    total: row.total,
+    status: row.status,
+    payment_method: row.payment_method,
+    payment_proof_url: row.payment_proof_url,
+    notes: row.notes,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    items: (row.order_items ?? []).map((i) => ({
+      id: i.id,
+      order_id: i.order_id,
+      product_id: i.product_id,
+      product_name: i.product_name,
+      product_sku: i.product_sku,
+      quantity: i.quantity,
+      unit_price: i.unit_price,
+      total_price: i.total_price,
+      created_at: i.created_at,
+    })),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -82,7 +159,7 @@ export async function createOrder({
   cookies,
 }: {
   input: CreateOrderInput;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<{ orderNumber: string; status: string }> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -172,7 +249,7 @@ export async function createOrder({
 export async function getMyOrders({
   cookies,
 }: {
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<OrderWithItems[]> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -193,36 +270,7 @@ export async function getMyOrders({
 
   if (error) throw error;
 
-  return (data ?? []).map((o: any) => ({
-    id: o.id,
-    order_number: o.order_number,
-    user_id: o.user_id,
-    customer_name: o.customer_name,
-    customer_email: o.customer_email,
-    customer_phone: o.customer_phone,
-    delivery_address: o.delivery_address,
-    subtotal: o.subtotal,
-    shipping_cost: o.shipping_cost,
-    tax: o.tax,
-    total: o.total,
-    status: o.status,
-    payment_method: o.payment_method,
-    payment_proof_url: o.payment_proof_url,
-    notes: o.notes,
-    created_at: o.created_at,
-    updated_at: o.updated_at,
-    items: (o.order_items ?? []).map((i: any) => ({
-      id: i.id,
-      order_id: i.order_id,
-      product_id: i.product_id,
-      product_name: i.product_name,
-      product_sku: i.product_sku,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      total_price: i.total_price,
-      created_at: i.created_at,
-    })),
-  }));
+  return (data ?? []).map((o: OrderRow) => toOrderWithItems(o));
 }
 
 /* ------------------------------------------------------------------ */
@@ -240,36 +288,7 @@ export async function getAllOrdersAdmin(): Promise<OrderWithItems[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((o: any) => ({
-    id: o.id,
-    order_number: o.order_number,
-    user_id: o.user_id,
-    customer_name: o.customer_name,
-    customer_email: o.customer_email,
-    customer_phone: o.customer_phone,
-    delivery_address: o.delivery_address,
-    subtotal: o.subtotal,
-    shipping_cost: o.shipping_cost,
-    tax: o.tax,
-    total: o.total,
-    status: o.status,
-    payment_method: o.payment_method,
-    payment_proof_url: o.payment_proof_url,
-    notes: o.notes,
-    created_at: o.created_at,
-    updated_at: o.updated_at,
-    items: (o.order_items ?? []).map((i: any) => ({
-      id: i.id,
-      order_id: i.order_id,
-      product_id: i.product_id,
-      product_name: i.product_name,
-      product_sku: i.product_sku,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      total_price: i.total_price,
-      created_at: i.created_at,
-    })),
-  }));
+  return (data ?? []).map((o: OrderRow) => toOrderWithItems(o));
 }
 
 /** Perbarui status pesanan (admin only). Butuh service-role. */
@@ -308,7 +327,7 @@ export async function getOrderById({
   cookies,
 }: {
   id: string;
-  cookies: () => CookieMethodsServer;
+  cookies: () => SupabaseCookieStore;
 }): Promise<OrderWithItems | null> {
   const supabase = await createServerSupabaseClient(cookies());
 
@@ -330,40 +349,10 @@ export async function getOrderById({
   if (error || !data) return null;
 
   // Cek kepemilikan (kecuali admin)
-  const isAdmin = (user as any).user_metadata?.role === "admin";
+  const isAdmin = isAdminUser(user);
   if (!isAdmin && data.user_id !== user.id) {
     return null;
   }
 
-  const o = data as any;
-  return {
-    id: o.id,
-    order_number: o.order_number,
-    user_id: o.user_id,
-    customer_name: o.customer_name,
-    customer_email: o.customer_email,
-    customer_phone: o.customer_phone,
-    delivery_address: o.delivery_address,
-    subtotal: o.subtotal,
-    shipping_cost: o.shipping_cost,
-    tax: o.tax,
-    total: o.total,
-    status: o.status,
-    payment_method: o.payment_method,
-    payment_proof_url: o.payment_proof_url,
-    notes: o.notes,
-    created_at: o.created_at,
-    updated_at: o.updated_at,
-    items: (o.order_items ?? []).map((i: any) => ({
-      id: i.id,
-      order_id: i.order_id,
-      product_id: i.product_id,
-      product_name: i.product_name,
-      product_sku: i.product_sku,
-      quantity: i.quantity,
-      unit_price: i.unit_price,
-      total_price: i.total_price,
-      created_at: i.created_at,
-    })),
-  };
+  return toOrderWithItems(data as OrderRow);
 }

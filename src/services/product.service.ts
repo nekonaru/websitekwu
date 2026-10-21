@@ -9,7 +9,7 @@ import {
   createServiceSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase";
-import type { CookieMethodsServer } from "@supabase/ssr";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export interface Product {
   id: string;
@@ -32,6 +32,50 @@ export interface Category {
   name: string;
   slug: string;
   createdAt?: string;
+}
+
+/** Bentuk baris tabel `products` di database Supabase. */
+interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  short_description: string | null;
+  price: number;
+  stock: number;
+  category: string;
+  image_url: string | null;
+  is_featured: boolean | null;
+  is_draft: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Bentuk baris tabel `categories` di database Supabase. */
+interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+/** Ubah baris database menjadi objek produk yang dipakai aplikasi. */
+function toProduct(row: ProductRow): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? "",
+    shortDescription: row.short_description ?? "",
+    price: row.price,
+    stock: row.stock,
+    category: row.category,
+    image: row.image_url ?? "",
+    isFeatured: row.is_featured ?? false,
+    isDraft: row.is_draft ?? false,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -145,7 +189,7 @@ function mockProductToDbProduct(p: typeof MOCK_PRODUCTS[0]): Product {
 export async function getCategories({
   cookies,
 }: {
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 } = {}): Promise<Category[]> {
   if (!isSupabaseConfigured()) {
     return MOCK_CATEGORIES;
@@ -165,7 +209,7 @@ export async function getCategories({
     return MOCK_CATEGORIES;
   }
 
-  return (data ?? []).map((c: any) => ({
+  return (data ?? []).map((c: CategoryRow) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
@@ -181,7 +225,7 @@ export async function getCategories({
 export async function getPublishedProducts({
   cookies,
 }: {
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 } = {}): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
     return MOCK_PRODUCTS.map(mockProductToDbProduct);
@@ -202,28 +246,14 @@ export async function getPublishedProducts({
     return MOCK_PRODUCTS.map(mockProductToDbProduct);
   }
 
-  return (data ?? []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    stock: p.stock,
-    category: p.category,
-    image: p.image_url,
-    isFeatured: p.is_featured,
-    isDraft: p.is_draft,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
-  }));
+  return (data ?? []).map((p: ProductRow) => toProduct(p));
 }
 
 /** Ambil produk yang unggul (featured). */
 export async function getFeaturedProducts({
   cookies,
 }: {
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 } = {}): Promise<Product[]> {
   const all = await getPublishedProducts({ cookies });
   return all.filter((p) => p.isFeatured);
@@ -235,7 +265,7 @@ export async function getProductBySlug({
   cookies,
 }: {
   slug: string;
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 }): Promise<Product | null> {
   if (!isSupabaseConfigured()) {
     const found = MOCK_PRODUCTS.find(
@@ -259,22 +289,8 @@ export async function getProductBySlug({
     return null;
   }
 
-  const p = data as any;
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    stock: p.stock,
-    category: p.category,
-    image: p.image_url,
-    isFeatured: p.is_featured,
-    isDraft: p.is_draft,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
-  };
+  const p = data as ProductRow;
+  return toProduct(p);
 }
 
 /** Cari produk berdasarkan nama atau deskripsi. */
@@ -283,7 +299,7 @@ export async function searchProducts({
   cookies,
 }: {
   query: string;
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 }): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
     const q = query.toLowerCase();
@@ -314,21 +330,7 @@ export async function searchProducts({
     return [];
   }
 
-  return (data ?? []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    stock: p.stock,
-    category: p.category,
-    image: p.image_url,
-    isFeatured: p.is_featured,
-    isDraft: p.is_draft,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
-  }));
+  return (data ?? []).map((p: ProductRow) => toProduct(p));
 }
 
 /** Ambil produk berdasarkan kategori. */
@@ -337,7 +339,7 @@ export async function getProductsByCategory({
   cookies,
 }: {
   categorySlug: string;
-  cookies?: () => CookieMethodsServer;
+  cookies?: () => SupabaseCookieStore;
 }): Promise<Product[]> {
   if (!isSupabaseConfigured()) {
     return MOCK_PRODUCTS.filter(
@@ -361,21 +363,7 @@ export async function getProductsByCategory({
     return [];
   }
 
-  return (data ?? []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    stock: p.stock,
-    category: p.category,
-    image: p.image_url,
-    isFeatured: p.is_featured,
-    isDraft: p.is_draft,
-    createdAt: p.created_at,
-    updatedAt: p.updated_at,
-  }));
+  return (data ?? []).map((p: ProductRow) => toProduct(p));
 }
 
 /* ------------------------------------------------------------------ */
@@ -435,7 +423,7 @@ export async function updateProductAdmin(
 ) {
   const supabase = createServiceSupabaseClient();
 
-  const updateData: Record<string, any> = {};
+  const updateData: Record<string, unknown> = {};
   if (input.name !== undefined) updateData.name = input.name;
   if (input.slug !== undefined) updateData.slug = input.slug;
   if (input.description !== undefined) updateData.description = input.description;

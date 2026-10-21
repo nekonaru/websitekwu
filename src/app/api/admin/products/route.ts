@@ -3,6 +3,7 @@
  * Daftar semua produk untuk admin (termasuk draft).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { createServiceSupabaseClient } from "@/lib/supabase";
 import { createProductAdmin } from "@/services/product.service";
 import { z } from "zod";
@@ -36,10 +37,10 @@ export async function GET() {
         updatedAt: p.updated_at,
       })),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/admin/products error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memuat produk" },
+      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
       { status: 500 }
     );
   }
@@ -85,10 +86,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("POST /api/admin/products error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal membuat produk" },
+      { success: false, error: getErrorMessage(err, "Gagal membuat produk") },
       { status: 400 }
     );
   }

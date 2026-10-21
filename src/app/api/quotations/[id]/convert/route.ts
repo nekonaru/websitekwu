@@ -3,6 +3,7 @@
  * Konversi quotation yang disetujui menjadi pesanan B2B (admin only).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { convertQuotationToOrder } from "@/services/quotation.service";
 import { z } from "zod";
 
@@ -33,10 +34,10 @@ export async function POST(
         status: result.status,
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("POST /api/quotations/[id]/convert error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal mengonversi quotation menjadi pesanan" },
+      { success: false, error: getErrorMessage(err, "Gagal mengonversi quotation menjadi pesanan") },
       { status: 400 }
     );
   }

@@ -3,10 +3,11 @@
  * Perbarui status RFQ dengan transisi sah (admin only).
  */
 import { NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
-import type { CookieMethodsServer } from "@supabase/ssr";
 import { updateRfqStatusAdmin } from "@/services/rfq.service";
 import { z } from "zod";
+import type { SupabaseCookieStore } from "@/lib/supabase";
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -54,7 +55,7 @@ export async function PATCH(
       rfqId: id,
       newStatus: parsedBody.data.status,
       note: parsedBody.data.note,
-      cookies: cookies as unknown as () => CookieMethodsServer,
+      cookies: cookies as unknown as () => SupabaseCookieStore,
     });
 
     return NextResponse.json({
@@ -65,10 +66,10 @@ export async function PATCH(
         newStatus: result.newStatus,
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("PATCH /api/rfqs/[id]/status error:", err);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Gagal memperbarui status RFQ" },
+      { success: false, error: getErrorMessage(err, "Gagal memperbarui status RFQ") },
       { status: 400 }
     );
   }
