@@ -10,6 +10,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import { CATEGORIES, PRODUCTS } from "@/lib/data";
 
 export interface Product {
   id: string;
@@ -82,103 +83,36 @@ export function toProduct(row: ProductRow): Product {
 /* Fallback data mock (digunakan saat Supabase belum dikonfigurasi)   */
 /* ------------------------------------------------------------------ */
 
-const MOCK_CATEGORIES: Category[] = [
-  { id: "1", name: "Alat Tulis", slug: "alat-tulis" },
-  { id: "2", name: "Elektronik", slug: "elektronik" },
-  { id: "3", name: "Pakaian", slug: "pakaian" },
-  { id: "4", name: "Makanan & Minuman", slug: "makanan-minuman" },
-  { id: "5", name: "Kesehatan", slug: "kesehatan" },
-];
+const MOCK_CATEGORIES: Category[] = CATEGORIES;
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: "p1",
-    name: "Buku Tulis Contoh A5",
-    slug: "buku-tulis-contoh-a5",
-    description: "Buku tulis contoh untuk keperluan kuliah, kertas berkualitas, 60 lembar.",
-    shortDescription: "Buku tulis contoh A5, 60 lembar.",
-    price: 15000,
-    stock: 120,
-    category: "alat-tulis",
-    image: "https://placehold.co/400x500/orange/white?text=Buku+Tulis+Contoh+A5",
-    isFeatured: true,
-  },
-  {
-    id: "p2",
-    name: "Tinta Bolpoin Contoh (12 pcs)",
-    slug: "tinta-bolpoin-contoh-12-pcs",
-    description: "Set bolpoin contoh, 12 buah dalam satu kotak, tinta hitam.",
-    shortDescription: "Set bolpoin 12 pcs.",
-    price: 48000,
-    stock: 50,
-    category: "alat-tulis",
-    image: "https://placehold.co/400x500/blue/white?text=Tinta+Bolpoin+Contoh",
-    isFeatured: true,
-  },
-  {
-    id: "p3",
-    name: "Kaos KWU Contoh",
-    slug: "kaos-kwu-contoh",
-    description: "Kaos cotton contoh dengan logo KWU, berbagai ukuran.",
-    shortDescription: "Kaos KWU contoh.",
-    price: 95000,
-    stock: 30,
-    category: "pakaian",
-    image: "https://placehold.co/400x500/orange/white?text=Kaos+KWU+Contoh",
-    isFeatured: true,
-  },
-  {
-    id: "p4",
-    name: "Power Bank Contoh 10000mAh",
-    slug: "power-bank-contoh-10000mah",
-    description: "Power bank contoh kapasitas 10000mAh, dua port USB.",
-    shortDescription: "Power bank 10000mAh.",
-    price: 185000,
-    stock: 15,
-    category: "elektronik",
-    image: "https://placehold.co/400x500/blue/white?text=Power+Bank+10000mAh",
-    isFeatured: true,
-  },
-  {
-    id: "p5",
-    name: "Snack Kotak Contoh",
-    slug: "snack-kotak-contoh",
-    description: "Kotak rass contoh berbagai rasa, untuk stok kantin.",
-    shortDescription: "Snack kotak contoh.",
-    price: 35000,
-    stock: 80,
-    category: "makanan-minuman",
-    image: "https://placehold.co/400x500/orange/white?text=Snack+Kotak+Contoh",
-  },
-  {
-    id: "p6",
-    name: "Masker Kesehatan Contoh (50 pcs)",
-    slug: "masker-kesehatan-contoh-50-pcs",
-    description: "Masker kesehatan contoh, kotak 50 lembar, 3 lapis.",
-    shortDescription: "Masker kesehatan 50 pcs.",
-    price: 65000,
-    stock: 100,
-    category: "kesehatan",
-    image: "https://placehold.co/400x500/blue/white?text=Masker+Kesehatan",
-  },
-];
+const MOCK_PRODUCTS: Product[] = PRODUCTS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  slug: p.slug,
+  description: p.description,
+  shortDescription: p.shortDescription,
+  price: p.price,
+  stock: p.stock,
+  category: p.category,
+  image: p.image,
+  isFeatured: p.isFeatured,
+  isDraft: p.isDraft,
+}));
 
-function mockProductToDbProduct(p: typeof MOCK_PRODUCTS[0]): Product {
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.shortDescription,
-    price: p.price,
-    stock: p.stock,
-    category: p.category,
-    image: p.image,
-    isFeatured: p.isFeatured,
-    isDraft: p.isDraft,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt,
-  };
+/* ------------------------------------------------------------------ */
+/* Sumber data                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Men从哪里 daftar produk berasal.
+ * "database" berarti data diambil dari Supabase.
+ * "contoh" berarti memakai data contoh sebagai fallback.
+ */
+export type DataSource = "database" | "contoh";
+
+export interface DataResult<T> {
+  data: T;
+  source: DataSource;
 }
 
 /* ------------------------------------------------------------------ */
@@ -226,9 +160,9 @@ export async function getPublishedProducts({
   cookies,
 }: {
   cookies?: () => SupabaseCookieStore;
-} = {}): Promise<Product[]> {
+} = {}): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
-    return MOCK_PRODUCTS.map(mockProductToDbProduct);
+    return { data: MOCK_PRODUCTS, source: "contoh" };
   }
 
   const supabase = cookies
@@ -243,10 +177,13 @@ export async function getPublishedProducts({
 
   if (error) {
     console.error("getPublishedProducts error:", error);
-    return MOCK_PRODUCTS.map(mockProductToDbProduct);
+    return { data: MOCK_PRODUCTS, source: "contoh" };
   }
 
-  return (data ?? []).map((p: ProductRow) => toProduct(p));
+  return {
+    data: (data ?? []).map((p: ProductRow) => toProduct(p)),
+    source: "database",
+  };
 }
 
 /** Ambil produk yang unggul (featured). */
@@ -254,9 +191,12 @@ export async function getFeaturedProducts({
   cookies,
 }: {
   cookies?: () => SupabaseCookieStore;
-} = {}): Promise<Product[]> {
+} = {}): Promise<DataResult<Product[]>> {
   const all = await getPublishedProducts({ cookies });
-  return all.filter((p) => p.isFeatured);
+  return {
+    data: all.data.filter((p) => p.isFeatured),
+    source: all.source,
+  };
 }
 
 /** Ambil produk berdasarkan slug. */
@@ -266,12 +206,12 @@ export async function getProductBySlug({
 }: {
   slug: string;
   cookies?: () => SupabaseCookieStore;
-}): Promise<Product | null> {
+}): Promise<DataResult<Product | null>> {
   if (!isSupabaseConfigured()) {
     const found = MOCK_PRODUCTS.find(
       (p) => p.slug === slug && !p.isDraft
     );
-    return found ? mockProductToDbProduct(found) : null;
+    return { data: found ?? null, source: "contoh" };
   }
 
   const supabase = cookies
@@ -286,11 +226,11 @@ export async function getProductBySlug({
     .single();
 
   if (error || !data) {
-    return null;
+    return { data: null, source: "database" };
   }
 
   const p = data as ProductRow;
-  return toProduct(p);
+  return { data: toProduct(p), source: "database" };
 }
 
 /** Cari produk berdasarkan nama atau deskripsi. */
@@ -300,16 +240,19 @@ export async function searchProducts({
 }: {
   query: string;
   cookies?: () => SupabaseCookieStore;
-}): Promise<Product[]> {
+}): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
     const q = query.toLowerCase();
-    return MOCK_PRODUCTS.filter(
-      (p) =>
-        !p.isDraft &&
-        (p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q))
-    ).map(mockProductToDbProduct);
+    return {
+      data: MOCK_PRODUCTS.filter(
+        (p) =>
+          !p.isDraft &&
+          (p.name.toLowerCase().includes(q) ||
+            p.description.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q))
+      ),
+      source: "contoh",
+    };
   }
 
   const supabase = cookies
@@ -327,10 +270,13 @@ export async function searchProducts({
 
   if (error) {
     console.error("searchProducts error:", error);
-    return [];
+    return { data: [], source: "database" };
   }
 
-  return (data ?? []).map((p: ProductRow) => toProduct(p));
+  return {
+    data: (data ?? []).map((p: ProductRow) => toProduct(p)),
+    source: "database",
+  };
 }
 
 /** Ambil produk berdasarkan kategori. */
@@ -340,11 +286,14 @@ export async function getProductsByCategory({
 }: {
   categorySlug: string;
   cookies?: () => SupabaseCookieStore;
-}): Promise<Product[]> {
+}): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
-    return MOCK_PRODUCTS.filter(
-      (p) => p.category === categorySlug && !p.isDraft
-    ).map(mockProductToDbProduct);
+    return {
+      data: MOCK_PRODUCTS.filter(
+        (p) => p.category === categorySlug && !p.isDraft
+      ),
+      source: "contoh",
+    };
   }
 
   const supabase = cookies
@@ -360,10 +309,13 @@ export async function getProductsByCategory({
 
   if (error) {
     console.error("getProductsByCategory error:", error);
-    return [];
+    return { data: [], source: "database" };
   }
 
-  return (data ?? []).map((p: ProductRow) => toProduct(p));
+  return {
+    data: (data ?? []).map((p: ProductRow) => toProduct(p)),
+    source: "database",
+  };
 }
 
 /* ------------------------------------------------------------------ */

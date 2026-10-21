@@ -22,14 +22,18 @@ export async function GET(
 
     const product = await getProductBySlug({ slug });
 
-    if (!product) {
+    if (!product.data) {
       return NextResponse.json(
         { success: false, error: "Produk tidak ditemukan" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: product });
+    return NextResponse.json({
+      success: true,
+      data: product.data,
+      source: product.source,
+    });
   } catch (err: unknown) {
     console.error("GET /api/produk/[slug] error:", err);
     return NextResponse.json(

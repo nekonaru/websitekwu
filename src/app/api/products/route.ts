@@ -16,16 +16,20 @@ export async function GET(req: Request) {
     const category = searchParams.get("category") || undefined;
     const q = searchParams.get("q") || undefined;
 
-    let products;
+    let result;
     if (q) {
-      products = await searchProducts({ query: q });
+      result = await searchProducts({ query: q });
     } else if (category) {
-      products = await getProductsByCategory({ categorySlug: category });
+      result = await getProductsByCategory({ categorySlug: category });
     } else {
-      products = await getPublishedProducts();
+      result = await getPublishedProducts();
     }
 
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      source: result.source,
+    });
   } catch (err: unknown) {
     console.error("GET /api/products error:", err);
     return NextResponse.json(

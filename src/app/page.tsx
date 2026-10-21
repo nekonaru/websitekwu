@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Shield, Flame, Users } from "lucide-react";
-import { getFeaturedProducts } from "@/lib/data";
-import { ProductCard } from "@/components/products/product-card";
+import { FeaturedProducts } from "@/components/products/featured-products";
 
 export default function Home() {
-  const featured = getFeaturedProducts();
-
   return (
     <div className="flex flex-col gap-0">
       {/* Hero */}
@@ -88,11 +85,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <FeaturedProducts limit={4} />
         </div>
       </section>
 

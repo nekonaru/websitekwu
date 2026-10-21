@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatRupiah } from "@/lib/format";
+import { ProductCard } from "@/components/products/product-card";
 
 export interface Product {
   id: string;
@@ -22,57 +20,11 @@ export interface Product {
   updatedAt?: string;
 }
 
-export interface ProductCardProps {
-  product: Product;
-}
-
-function ProductCard({ product }: ProductCardProps) {
-  const inStock = product.stock > 0;
-  return (
-    <article className="flex flex-col border border-border rounded-2xl p-5 bg-white hover:shadow-2xl transition-all duration-300 hover:border-primary/50 group">
-      <div className="aspect-[4/5] overflow-hidden rounded-xl mb-4 relative bg-neutral-100 group-hover:scale-105 transition-transform duration-300">
-        <Image
-          src={product.image}
-          alt={product.name}
-          width={400}
-          height={500}
-          className="w-full h-full object-cover"
-        />
-        {!inStock && (
-          <span className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white font-bold text-sm uppercase tracking-wider">
-              Stok Habis
-            </span>
-          </span>
-        )}
-      </div>
-      <Link href={`/produk/${product.slug}`} className="flex flex-col gap-2">
-        <h3 className="font-bold text-heading line-clamp-2 group-hover:text-primary transition-colors">
-          {product.name}
-        </h3>
-        <p className="text-primary font-bold text-lg">{formatRupiah(product.price)}</p>
-      </Link>
-      <p className={`text-xs font-medium ${inStock ? "text-green-600" : "text-orange-600"}`}>
-        {inStock ? `Stok Tersedia: ${product.stock}` : "Stok Habis"}
-      </p>
-      <button
-        disabled={!inStock}
-        className={`mt-4 w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-          inStock
-            ? "border-primary text-primary bg-orange-50 hover:bg-orange-100 hover:shadow-md shadow-orange-100"
-            : "border-neutral-200 text-neutral-400 bg-neutral-50 cursor-not-allowed"
-        }`}
-      >
-        {inStock ? "Masukkan Keranjang" : "Habis"}
-      </button>
-    </article>
-  );
-}
-
 export default function Katalog() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<"database" | "contoh">("database");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -86,18 +38,23 @@ export default function Katalog() {
     async function loadData() {
       try {
         let daftarProduk: Product[] = [];
+        let sumber: "database" | "contoh" = "database";
+
         if (query) {
           const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
           const data = await res.json();
           daftarProduk = data.success ? data.data : [];
+          sumber = data.source ?? "database";
         } else if (categoryFilter) {
           const res = await fetch(`/api/products?category=${categoryFilter}`);
           const data = await res.json();
           daftarProduk = data.success ? data.data : [];
+          sumber = data.source ?? "database";
         } else {
           const res = await fetch("/api/products");
           const data = await res.json();
           daftarProduk = data.success ? data.data : [];
+          sumber = data.source ?? "database";
         }
 
         if (!aktif) return;
@@ -111,6 +68,7 @@ export default function Katalog() {
         ];
         setCategories(uniqueCategories);
         setProducts(daftarProduk);
+        setSource(sumber);
       } catch (err) {
         console.error(err);
       } finally {
@@ -233,6 +191,13 @@ export default function Katalog() {
               <Filter className="h-4 w-4" aria-hidden="true" /> Filter
             </button>
           </div>
+
+          {source === "contoh" && (
+            <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-800">
+              Katalog sedang menampilkan data contoh. Data katalog lengkap
+              akan tampil setelah basis data toko siap.
+            </div>
+          )}
 
           <div className="relative mb-6 max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden="true" />
