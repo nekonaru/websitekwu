@@ -2,12 +2,27 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { formatRupiah } from "@/lib/format";
-import type { Product } from "@/services/product.service";
 
-interface ProductCardProps {
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  stock: number;
+  image: string;
+  category?: string;
+  description?: string;
+  shortDescription?: string;
+  isFeatured?: boolean;
+  isDraft?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProductCardProps {
   product: Product;
 }
 
@@ -54,13 +69,12 @@ function ProductCard({ product }: ProductCardProps) {
 }
 
 export default function Katalog() {
-  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") ?? "");
-  const [query, setQuery] = useState(searchParams.get("q") ?? "");
-  const [page, setPage] = useState(Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1));
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
 
   const PAGE_SIZE = 9;
@@ -87,7 +101,9 @@ export default function Katalog() {
         products = data.success ? data.data : [];
       }
 
-      const uniqueCategories = [...new Set(products.map((p) => p.category))];
+      const uniqueCategories = [
+        ...new Set(products.map((p) => p.category).filter((c): c is string => Boolean(c))),
+      ];
       setCategories(uniqueCategories);
       setProducts(products);
     } catch (err) {
@@ -135,7 +151,7 @@ export default function Katalog() {
                 <button
                   onClick={() => setCategoryFilter("")}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    !categoryFilter ? "bg-primary text-white" : "text-heading hover:bg-neutral-100"
+                    !categoryFilter ? "bg-primary text-white" : "text-neutral-600 hover:bg-neutral-100"
                   }`}
                 >
                   Semua Kategori
@@ -145,12 +161,12 @@ export default function Katalog() {
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      categoryFilter === cat ? "bg-primary text-white" : "text-heading hover:bg-neutral-100"
+                      categoryFilter === cat ? "bg-primary text-white" : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                   >
                     {cat}
                   </button>
-                )}
+                ))}
               </div>
             </div>
             <div>
