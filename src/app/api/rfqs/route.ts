@@ -25,11 +25,19 @@ export async function POST(req: Request) {
 
     const { organizationName, contactName, businessEmail, deliveryLocation, requiredDate, items } = parsed.data;
 
-    // Nomor RFQ dihasilkan di backend (keamanan terhadap request bersamaan)
-    const rfqNumber = `KWU-RFQ-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+    // Ambil pengguna yang login untuk mengisi kolom pembuat RFQ.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    // Catatan: dalam implementasi produksi, nomor RFQ dihasilkan lewat
-    // fungsi database sequence agar aman terhadap kompetisi.
+    // Nomor RFQ dihasilkan oleh sequence di database agar aman terhadap
+    // request bersamaan.
+    const { data: rfqNumber, error: numberError } = await supabase.rpc(
+      "generate_rfq_number"
+    );
+
+    if (numberError) throw numberError;
+
     const { data: rfq, error: rfqError } = await supabase
       .from("rfqs")
       .insert({
@@ -40,7 +48,7 @@ export async function POST(req: Request) {
         delivery_location: deliveryLocation,
         required_date: requiredDate,
         status: "submitted",
-        created_by: null, // diisi oleh auth dalam implementasi autentikasi penuh
+        created_by: user?.id ?? null,
       })
       .select()
       .single();

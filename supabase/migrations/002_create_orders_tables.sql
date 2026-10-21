@@ -90,7 +90,11 @@ CREATE POLICY "Akses order_items mengikuti order induk" ON order_items
     )
   );
 
--- Fungsi pembangkit nomor pesanan aman
+-- Fungsi pembangkit nomor pesanan aman terhadap request bersamaan.
+CREATE SEQUENCE IF NOT EXISTS order_number_seq START 1;
+
+GRANT USAGE, SELECT ON SEQUENCE order_number_seq TO authenticated, anon, service_role;
+
 CREATE OR REPLACE FUNCTION generate_order_number() RETURNS TEXT LANGUAGE plpgsql AS $$
 DECLARE
   seq INTEGER;
@@ -98,8 +102,7 @@ DECLARE
   prefix TEXT := 'KWU-ORD';
 BEGIN
   SELECT EXTRACT(YEAR FROM now())::int INTO yr;
-  EXECUTE format('CREATE SEQUENCE IF NOT EXISTS order_seq_%s START 1', yr) INTO seq;
-  EXECUTE format('SELECT nextval(%L)', 'order_seq_' || yr) INTO seq;
+  SELECT nextval('order_number_seq') INTO seq;
   RETURN prefix || '-' || yr || '-' || lpad(seq::text, 5, '0');
 END;
 $$;

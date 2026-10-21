@@ -25,8 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "Menunggu pembayaran",
   paid: "Dibayar",
   processing: "Diproses",
-  shipped: "Dikirim",
-  delivered: "Diterima",
+  shipped: "Disiapkan",
+  delivered: "Selesai",
   cancelled: "Dibatalkan",
   refunded: "Dikembalikan dana",
 };

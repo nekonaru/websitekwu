@@ -76,7 +76,17 @@ supabase/
 
 ## Konfigurasi Supabase (backend)
 
-Buat database Supabase lalu jalankan seluruh migrasi di `supabase/migrations/` secara berurutan melalui SQL Editor Supabase:
+Buat database Supabase lalu jalankan seluruh migrasi di `supabase/migrations/` secara berurutan.
+
+Cara paling praktis lewat skrip bawaan (butuh personal access token dari dashboard Supabase):
+
+```bash
+export SUPABASE_ACCESS_TOKEN="sbp_xxx"
+export SUPABASE_PROJECT_REF="ref-proyek-anda"
+npm run migrate
+```
+
+Alternatifnya, jalankan tiap berkas `.sql` di `supabase/migrations/` melalui SQL Editor Supabase secara berurutan:
 
 - `001_create_rfq_tables.sql` (RFQ, item RFQ, riwayat status, quotation)
 - `002_create_orders_tables.sql` (pesanan dan item pesanan)
@@ -108,6 +118,7 @@ Kontak resmi toko (opsional, dipakai pada halaman Kontak):
 | `npm run build` | Build produksi |
 | `npm run start` | Jalankan server produksi |
 | `npm run lint` | Jalankan ESLint |
+| `npm run migrate` | Jalankan migrasi database ke Supabase |
 
 ## Catatan implementasi
 

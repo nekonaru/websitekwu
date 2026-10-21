@@ -214,9 +214,12 @@ export async function createQuotation({
 
   const nextVersion = (existingQuotations?.[0]?.version ?? 0) + 1;
 
-  const quotationNumber = `KWU-Q-${new Date().getFullYear()}-${String(
-    Math.floor(10000 + Math.random() * 90000)
-  ).padStart(5, "0")}`;
+  // Nomor quotation dihasilkan oleh sequence di database agar aman terhadap
+  // request bersamaan.
+  const { data: quotationNumber, error: numberError } =
+    await serviceClient.rpc("generate_quotation_number");
+
+  if (numberError) throw numberError;
 
   // Hitung total
   const subtotal = items.reduce(
@@ -411,9 +414,11 @@ export async function convertQuotationToOrder({
   const discount = quotation.discount ?? 0;
   const total = subtotal + shippingCost - discount;
 
-  const orderNumber = `KWU-ORD-${new Date().getFullYear()}-${String(
-    Math.floor(10000 + Math.random() * 90000)
-  ).padStart(5, "0")}`;
+  const { data: orderNumber, error: orderNumberError } = await supabase.rpc(
+    "generate_order_number"
+  );
+
+  if (orderNumberError) throw orderNumberError;
 
   // Buat pesanan B2B
   const { data: order, error: orderError } = await supabase

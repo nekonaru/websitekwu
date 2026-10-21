@@ -195,12 +195,16 @@ export async function createOrder({
   const tax = 0;
   const total = subtotal + shippingCost + tax;
 
-  const orderNumber = `KWU-ORD-${new Date().getFullYear()}-${String(
-    Math.floor(10000 + Math.random() * 90000)
-  ).padStart(5, "0")}`;
-
   // Buat order dalam transaksi (menggunakan service-role untuk transaksi atomic)
   const serviceClient = createServiceSupabaseClient();
+
+  // Nomor pesanan dihasilkan oleh sequence di database agar aman terhadap
+  // request bersamaan.
+  const { data: orderNumber, error: numberError } = await serviceClient.rpc(
+    "generate_order_number"
+  );
+
+  if (numberError) throw numberError;
 
   const { data: order, error: orderError } = await serviceClient
     .from("orders")

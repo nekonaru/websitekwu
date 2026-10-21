@@ -169,8 +169,8 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Menunggu pembayaran",
   paid: "Dibayar",
   processing: "Diproses",
-  shipped: "Dikirim",
-  delivered: "Diterima",
+  shipped: "Disiapkan",
+  delivered: "Selesai",
   cancelled: "Dibatalkan",
   refunded: "Dikembalikan dana",
 };

@@ -195,7 +195,15 @@ CREATE POLICY "Akses quotation_items mengikuti quotation" ON quotation_items
     )
   );
 
--- Fungsi pembangkit nomor RFQ aman terhadap request bersamaan
+-- Fungsi pembangkit nomor RFQ aman terhadap request bersamaan.
+-- Sequence dibuat di level migrasi (bukan di dalam fungsi) agar hak aksesnya
+-- dapat diberikan secara eksplisit.
+CREATE SEQUENCE IF NOT EXISTS rfq_number_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS quotation_number_seq START 1;
+
+GRANT USAGE, SELECT ON SEQUENCE rfq_number_seq TO authenticated, anon, service_role;
+GRANT USAGE, SELECT ON SEQUENCE quotation_number_seq TO authenticated, anon, service_role;
+
 CREATE OR REPLACE FUNCTION generate_rfq_number() RETURNS TEXT LANGUAGE plpgsql AS $$
 DECLARE
   seq INTEGER;
@@ -203,9 +211,19 @@ DECLARE
   prefix TEXT := 'KWU-RFQ';
 BEGIN
   SELECT EXTRACT(YEAR FROM now())::int INTO yr;
-  -- Gunakan sequence terpisah per tahun untuk nomor unik
-  EXECUTE format('CREATE SEQUENCE IF NOT EXISTS rfq_seq_%s START 1', yr) INTO seq;
-  EXECUTE format('SELECT nextval(%L)', 'rfq_seq_' || yr) INTO seq;
+  SELECT nextval('rfq_number_seq') INTO seq;
+  RETURN prefix || '-' || yr || '-' || lpad(seq::text, 5, '0');
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION generate_quotation_number() RETURNS TEXT LANGUAGE plpgsql AS $$
+DECLARE
+  seq INTEGER;
+  yr INTEGER;
+  prefix TEXT := 'KWU-Q';
+BEGIN
+  SELECT EXTRACT(YEAR FROM now())::int INTO yr;
+  SELECT nextval('quotation_number_seq') INTO seq;
   RETURN prefix || '-' || yr || '-' || lpad(seq::text, 5, '0');
 END;
 $$;

@@ -155,8 +155,8 @@ export default function AdminOrders() {
                           <option value="pending">Menunggu</option>
                           <option value="paid">Dibayar</option>
                           <option value="processing">Diproses</option>
-                          <option value="shipped">Dikirim</option>
-                          <option value="delivered">Diterima</option>
+                          <option value="shipped">Disiapkan</option>
+                          <option value="delivered">Selesai</option>
                           <option value="cancelled">Dibatalkan</option>
                           <option value="refunded">Dikembalikan</option>
                         </select>
