@@ -64,10 +64,15 @@ export function KwuChatbot() {
     setSending(true);
 
     try {
+      const riwayat = messages
+        .filter((m) => !m.loading && m.content)
+        .slice(-8)
+        .map((m) => ({ role: m.role, text: m.content }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, history: riwayat }),
       });
 
       if (!res.ok) throw new Error("Gagal mendapatkan balasan");

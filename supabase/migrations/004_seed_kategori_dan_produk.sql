@@ -21,7 +21,7 @@ INSERT INTO products (
     'Buku tulis contoh untuk keperluan kuliah, kertas berkualitas, 60 lembar.',
     'Buku tulis contoh A5, 60 lembar.',
     15000, 120, 'alat-tulis',
-    'https://placehold.co/400x500/orange/white?text=Buku+Tulis+Contoh+A5',
+    'https://placehold.co/400x500/orange/white.png?text=Buku+Tulis+Contoh+A5',
     true, false
   ),
   (
@@ -30,7 +30,7 @@ INSERT INTO products (
     'Set bolpoin contoh, 12 buah dalam satu kotak, tinta hitam.',
     'Set bolpoin 12 pcs.',
     48000, 50, 'alat-tulis',
-    'https://placehold.co/400x500/blue/white?text=Tinta+Bolpoin+Contoh',
+    'https://placehold.co/400x500/blue/white.png?text=Tinta+Bolpoin+Contoh',
     true, false
   ),
   (
@@ -39,7 +39,7 @@ INSERT INTO products (
     'Kaos cotton contoh dengan logo KWU, berbagai ukuran.',
     'Kaos KWU contoh.',
     95000, 30, 'pakaian',
-    'https://placehold.co/400x500/orange/white?text=Kaos+KWU+Contoh',
+    'https://placehold.co/400x500/orange/white.png?text=Kaos+KWU+Contoh',
     true, false
   ),
   (
@@ -48,7 +48,7 @@ INSERT INTO products (
     'Power bank contoh kapasitas 10000mAh, dua port USB.',
     'Power bank 10000mAh.',
     185000, 15, 'elektronik',
-    'https://placehold.co/400x500/blue/white?text=Power+Bank+10000mAh',
+    'https://placehold.co/400x500/blue/white.png?text=Power+Bank+10000mAh',
     true, false
   ),
   (
@@ -57,7 +57,7 @@ INSERT INTO products (
     'Kotak rass contoh berbagai rasa, untuk stok kantin.',
     'Snack kotak contoh.',
     35000, 80, 'makanan-minuman',
-    'https://placehold.co/400x500/orange/white?text=Snack+Kotak+Contoh',
+    'https://placehold.co/400x500/orange/white.png?text=Snack+Kotak+Contoh',
     false, false
   ),
   (
@@ -66,7 +66,7 @@ INSERT INTO products (
     'Masker kesehatan contoh, kotak 50 lembar, 3 lapis.',
     'Masker kesehatan contoh.',
     65000, 100, 'kesehatan',
-    'https://placehold.co/400x500/blue/white?text=Masker+Kesehatan',
+    'https://placehold.co/400x500/blue/white.png?text=Masker+Kesehatan',
     false, false
   )
 ON CONFLICT (slug) DO NOTHING;

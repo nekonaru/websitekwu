@@ -45,7 +45,7 @@ export const PRODUCTS: Product[] = [
     price: 15000,
     stock: 120,
     category: "alat-tulis",
-    image: "https://placehold.co/400x500/orange/white?text=Buku+Tulis+Contoh+A5",
+    image: "https://placehold.co/400x500/orange/white.png?text=Buku+Tulis+Contoh+A5",
     isFeatured: true,
   },
   {
@@ -57,7 +57,7 @@ export const PRODUCTS: Product[] = [
     price: 48000,
     stock: 50,
     category: "alat-tulis",
-    image: "https://placehold.co/400x500/blue/white?text=Tinta+Bolpoin+Contoh",
+    image: "https://placehold.co/400x500/blue/white.png?text=Tinta+Bolpoin+Contoh",
     isFeatured: true,
   },
   {
@@ -69,7 +69,7 @@ export const PRODUCTS: Product[] = [
     price: 95000,
     stock: 30,
     category: "pakaian",
-    image: "https://placehold.co/400x500/orange/white?text=Kaos+KWU+Contoh",
+    image: "https://placehold.co/400x500/orange/white.png?text=Kaos+KWU+Contoh",
     isFeatured: true,
   },
   {
@@ -81,7 +81,7 @@ export const PRODUCTS: Product[] = [
     price: 185000,
     stock: 15,
     category: "elektronik",
-    image: "https://placehold.co/400x500/blue/white?text=Power+Bank+10000mAh",
+    image: "https://placehold.co/400x500/blue/white.png?text=Power+Bank+10000mAh",
     isFeatured: true,
   },
   {
@@ -93,7 +93,7 @@ export const PRODUCTS: Product[] = [
     price: 35000,
     stock: 80,
     category: "makanan-minuman",
-    image: "https://placehold.co/400x500/orange/white?text=Snack+Kotak+Contoh",
+    image: "https://placehold.co/400x500/orange/white.png?text=Snack+Kotak+Contoh",
   },
   {
     id: "p6",
@@ -104,7 +104,7 @@ export const PRODUCTS: Product[] = [
     price: 65000,
     stock: 100,
     category: "kesehatan",
-    image: "https://placehold.co/400x500/blue/white?text=Masker+Kesehatan",
+    image: "https://placehold.co/400x500/blue/white.png?text=Masker+Kesehatan",
   },
 ];
 

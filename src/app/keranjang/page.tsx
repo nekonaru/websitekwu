@@ -133,8 +133,8 @@ export default function Keranjang() {
               </span>
             </div>
             <div className="flex justify-between mb-6 text-sm text-muted">
-              <span>Pengambilan barang</span>
-              <span>Diambil sendiri di toko KWU</span>
+              <span>Biaya layanan</span>
+              <span>Rp 0</span>
             </div>
             <div className="flex justify-between text-lg font-bold text-heading pt-4 border-t border-border">
               <span>Total</span>

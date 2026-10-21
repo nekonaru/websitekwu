@@ -225,7 +225,15 @@ export async function getProductBySlug({
     .eq("is_draft", false)
     .single();
 
-  if (error || !data) {
+  if (error) {
+    console.error("getProductBySlug error:", error);
+    const cadangan = MOCK_PRODUCTS.find(
+      (p) => p.slug === slug && !p.isDraft
+    );
+    return { data: cadangan ?? null, source: "contoh" };
+  }
+
+  if (!data) {
     return { data: null, source: "database" };
   }
 

@@ -107,7 +107,7 @@ export const RFQ_STATUS_LABELS: Record<RfqStatus, string> = {
   submitted: "Diajukan",
   under_review: "Sedang ditinjau",
   needs_information: "Perlu informasi tambahan",
-  quoted: "Penawaran dikirim",
+  quoted: "Penawaran terbit",
   negotiation: "Negosiasi",
   accepted: "Disetujui",
   rejected: "Ditolak",

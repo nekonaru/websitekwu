@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
     ],
+    // Gambar dalam format SVG diperbolehkan, tetapi skrip di dalamnya
+    // diblokir lewat Content Security Policy agar aman.
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   turbopack: {
     rules: {

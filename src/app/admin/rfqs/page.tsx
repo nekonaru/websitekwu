@@ -111,7 +111,7 @@ export default function AdminRfqs() {
             <option value="submitted">Diajukan</option>
             <option value="under_review">Sedang Ditinjau</option>
             <option value="needs_information">Perlu Informasi</option>
-            <option value="quoted">Penawaran Dikirim</option>
+            <option value="quoted">Penawaran Terbit</option>
             <option value="negotiation">Negosiasi</option>
             <option value="accepted">Disetujui</option>
             <option value="rejected">Ditolak</option>
