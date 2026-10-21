@@ -26,6 +26,8 @@
   --color-heading: #0F172A;
   --color-body: #334155;
   --color-muted: #64748B;
+  /* Alias yang dipakai pada beberapa komponen */
+  --color-foreground: var(--color-heading);
 
   --color-font-sans: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);

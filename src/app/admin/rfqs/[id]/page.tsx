@@ -714,7 +714,7 @@ export default function AdminRfqDetail({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-heading mb-1">
-                    Biaya Pengiriman
+                    Biaya Tambahan
                   </label>
                   <input
                     type="number"

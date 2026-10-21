@@ -32,11 +32,11 @@ const emptyCookieStore: SupabaseCookieStore = {
 
 /**
  * Buat klien Supabase untuk browser (Client Component).
- * Hanya menyertakan anon key publik — aman untuk bundle browser.
+ * Hanya menyertakan anon key publik, aman untuk bundle browser.
  */
 export function createBrowserSupabaseClient() {
   if (!isBrowser()) {
-    // Dipanggil di server tapi ingin browser client — fallback ke server client
+    // Dipanggil di server tapi ingin browser client, fallback ke server client
     // tanpa cookies (untuk data publik yang tidak butuh sesi).
     return createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -84,7 +84,7 @@ export default function AdminRfqs() {
           href="/business/rfq/new"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors shadow-md shadow-orange-200"
         >
-          <Plus className="h-4 w-4" /> Ajukan RFQ Contoh
+          <Plus className="h-4 w-4" /> Ajukan RFQ Baru
         </Link>
       </div>
 

@@ -1,15 +1,14 @@
 # KWU - Toko Kampus
 
-Website toko kampus dengan dua jalur transaksi: **B2C** (katalog, pemesanan, checkout) dan **B2B** (permintaan penawaran grosir / RFQ), dilengkapi dashboard admin dan chatbot Asisten KWU.
-
+Website toko kampus dengan dua jalur transaksi: **B2C** (katalog, keranjang, checkout) dan **B2B** (permintaan penawaran grosir / RFQ), dilengkapi dashboard admin dan chatbot Asisten KWU.
 
 ## Stack
 
-- [Next.js](https://nextjs.org/) 16 (App Router) + TypeScript
+- [Next.js](https://nextjs.org/) 16 (App Router, Turbopack) + TypeScript
 - [Tailwind CSS](https://tailwindcss.com/) v4 (design tokens)
-- [Supabase](https://supabase.com/) PostgreSQL + Supabase Auth (rencana backend)
-- [Zod](https://zod.dev/) untuk validasi skema
-- [lucide-react] untuk ikon
+- [Supabase](https://supabase.com/) PostgreSQL + Supabase Auth
+- [Zod](https://zod.dev/) untuk validasi skema di backend
+- [lucide-react](https://lucide.dev/) untuk ikon
 
 ## Struktur folder (ringkas)
 
@@ -17,37 +16,46 @@ Website toko kampus dengan dua jalur transaksi: **B2C** (katalog, pemesanan, che
 src/
   app/                    # Route Next.js App Router
     page.tsx              # Beranda
-    katalog/              # Katalog produk (filter + pagination)
+    katalog/              # Katalog produk (filter kategori, pencarian, pagination)
     produk/[slug]/        # Detail produk
-    keranjang/            # Keranjang (stub)
-    checkout/             # Checkout (stub)
-    login/                # Masuk (stub)
-    register/             # Daftar (stub)
-    profil/               # Profil (stub)
+    keranjang/            # Keranjang (context + localStorage)
+    checkout/             # Checkout B2C
+    pesanan-saya/         # Riwayat pesanan pengguna
+    login/ register/      # Autentikasi Supabase
+    profil/               # Profil pengguna
     business/rfq/new/     # Formulir RFQ B2B
     business/rfq/confirmation/[rfqNumber]/  # Konfirmasi RFQ
     admin/                # Dashboard admin
     admin/products/       # Kelola produk & stok
-    admin/rfqs/           # Kelola RFQ
-    api/rfqs/             # POST buat RFQ
-    api/my/rfqs/          # RFQ milik pengguna
+    admin/rfqs/           # Kelola RFQ dan quotation
+    admin/orders/         # Kelola pesanan
+    api/products/         # Katalog publik
+    api/produk/[slug]/    # Detail produk
+    api/orders/           # Buat pesanan B2C
+    api/my/orders/        # Pesanan milik pengguna
+    api/rfqs/             # Buat dan kelola RFQ
+    api/quotations/       # Quotation dan konversi ke pesanan
+    api/admin/            # Endpoint admin (produk, pesanan, RFQ)
     api/chat/             # Endpoint chatbot Asisten KWU
   components/
     layout/               # Header, Footer
-    products/             # ProductCard
     business/             # RfqForm
     chat/                 # KwuChatbot (Asisten KWU)
+  contexts/
+    cart-context.tsx      # State keranjang global
   lib/
-    design-tokens.ts      # Token desain (orange, biru, putih)
-    format.ts             # formatRupiah, formatDate, slugify
-    data.ts               # Lapisan data contoh (mock) untuk pengembangan
-    supabase.ts           # Klien Supabase
-    validation/rfq.ts     # Skema validasi RFQ (Zod)
+    format.ts             # formatRupiah, formatDate, slugify, getErrorMessage
+    data.ts               # Data contoh (mock) sebagai fallback
+    supabase.ts           # Klien Supabase (browser, server, service-role)
+  services/
+    product.service.ts    # Layer layanan produk
+    order.service.ts      # Layer layanan pesanan
+    rfq.service.ts        # Layer layanan RFQ
+    quotation.service.ts  # Layer layanan quotation
   types/
     rfq.ts                # Tipe data RFQ
 supabase/
-  migrations/
-    001_create_rfq_tables.sql   # Skema tabel RFQ, quotation, riwayat status
+  migrations/             # Skema tabel untuk RFQ, pesanan, dan produk
 ```
 
 ## Cara menjalankan (pengembangan)
@@ -68,24 +76,29 @@ supabase/
 
 ## Konfigurasi Supabase (backend)
 
-Buat database Supabase lalu jalankan migrasi:
-```bash
-supabase db push
-```
-atau impor `supabase/migrations/001_create_rfq_tables.sql` melalui SQL Editor Supabase.
+Buat database Supabase lalu jalankan seluruh migrasi di `supabase/migrations/` secara berurutan melalui SQL Editor Supabase:
 
-Pastikan variabel berikut diisi di `.env.local` (jangan di-commit ke repository):
+- `001_create_rfq_tables.sql` (RFQ, item RFQ, riwayat status, quotation)
+- `002_create_orders_tables.sql` (pesanan dan item pesanan)
+- `003_create_products_tables.sql` (produk dan kategori)
+
+Variabel yang harus diisi di `.env.local` (jangan di-commit ke repository):
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (khusus server)
 
 Untuk AI (chatbot), isi di backend saja (tidak ke browser):
+
 - `AI_PROVIDER`
 - `AI_API_KEY`
 - `AI_MODEL`
 
-## Data contoh (mock)
+Kontak resmi toko (opsional, dipakai pada halaman Kontak):
 
-`src/lib/data.ts` berisi **data contoh** (label jelas sebagai contoh) untuk pengembangan dan pengujian tanpa kredensial Supabase. Data ini bukan data operasional nyata. Ganti lapisan ini dengan panggilan Supabase saat backend dikonfigurasi.
+- `NEXT_PUBLIC_KWU_EMAIL`
+- `NEXT_PUBLIC_KWU_TELEPON`
+- `NEXT_PUBLIC_KWU_ALAMAT`
 
 ## Perintah yang tersedia
 
@@ -96,26 +109,25 @@ Untuk AI (chatbot), isi di backend saja (tidak ke browser):
 | `npm run start` | Jalankan server produksi |
 | `npm run lint` | Jalankan ESLint |
 
-## Asumsi
+## Catatan implementasi
 
-- Bahasa UI: Bahasa Indonesia.
+- Bahasa antarmuka: Bahasa Indonesia.
 - Zona waktu operasional: Asia/Jakarta.
-- Warna utama: orange, biru, dan putih (kelola lewat design tokens).
-- Autentikasi dan RLS Supabase akan diaktifkan dalam fase autentikasi penuh.
+- Halaman yang butuh data dinamis dimuat dari sisi klien lewat API route agar proses build tidak bergantung pada koneksi database.
+- Data contoh di `src/lib/data.ts` hanya dipakai sebagai fallback saat Supabase belum dikonfigurasi.
+- KWU tidak menyediakan layanan pengantaran maupun penjemputan, sehingga tidak ada biaya atau jadwal pengiriman yang ditampilkan.
 - Service-role key Supabase tidak pernah disertakan di bundle browser.
 
-## Keterbatasan (item terbuka)
+## Item terbuka
 
-- Halaman keranjang, checkout, login, register, dan profil masih stub; perlu dihubungkan ke auth dan keranjang nyata.
-- Dashboard admin menampilkan keadaan kosong sengaja (tidak ada data tiruan) hingga terhubung ke Supabase.
 - Migrasi RLS memerlukan `raw_auth_meta_data.role` diisi admin melalui Supabase Auth.
-- API chatbot menggunakan fallback aturan saat `AI_PROVIDER`/`AI_API_KEY`/`AI_MODEL` belum diisi.
-- Pengujian responsivitas, aksesibilitas, dan keamanan perlu dilakukan pada perangkat nyata dan dicatat.
-- Kebijakan retensi data harus ditetapkan bersama pengelola kampus (catat sebagai item terbuka).
+- Peran admin belum memiliki halaman manajemen pengguna terpisah.
+- API chatbot memakai fallback aturan bila `AI_PROVIDER`, `AI_API_KEY`, atau `AI_MODEL` belum diisi.
+- Pengujian responsivitas, aksesibilitas, dan keamanan perlu dilakukan pada perangkat nyata.
+- Kebijakan retensi data harus ditetapkan bersama pengelola kampus.
 
 ## Keamanan
 
-- Secret dan service-role key hanya di server / environment variables.
-- Semua endpoint yang mengubah data divalidasi di backend (Zod).
-- RLS aktif pada tabel yang terekspos di Supabase.
-- Tidak ada secret asli disimpan di repository.
+- Secret dan service-role key hanya berada di server atau environment variables.
+- Semua endpoint yang mengubah data divalidasi di backend dengan Zod.
+- Secret asli tidak disimpan di repository.

@@ -69,7 +69,7 @@ export default function Checkout() {
           customerName: form.name,
           customerEmail: form.email,
           customerPhone: form.phone,
-          deliveryAddress: "Diambil sendiri di toko KWU",
+          deliveryAddress: "Pembelian melalui website KWU",
           notes: form.notes,
           items: items.map((i) => ({
             productId: i.product.id,
@@ -256,8 +256,8 @@ export default function Checkout() {
           </button>
 
           <p className="text-sm text-muted text-center mt-4">
-            Pesanan akan diproses oleh admin KWU. Barang dapat diambil langsung
-            di toko setelah konfirmasi.
+            Pesanan akan diproses oleh admin KWU. Pembaruan status pesanan
+            dikirimkan ke alamat surel Anda.
           </p>
         </form>
       )}

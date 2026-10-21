@@ -123,7 +123,7 @@ export default function Home() {
               {
                 icon: Flame,
                 title: "Terkini & Terpercaya",
-                desc: "Stok selalu diperbarui dan siap diambil di toko.",
+                desc: "Stok selalu diperbarui mengikuti kondisi terbaru.",
                 color: "orange",
               },
             ].map((item) => (
