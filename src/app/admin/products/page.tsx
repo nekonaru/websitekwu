@@ -3,12 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Edit, Search } from "lucide-react";
-import {
-  createProductAdmin,
-  deleteProductAdmin,
-  updateProductAdmin,
-  getPublishedProducts,
-} from "@/services/product.service";
 import { formatRupiah } from "@/lib/format";
 
 export default function AdminProducts() {
@@ -69,10 +63,26 @@ export default function AdminProducts() {
       };
 
       if (editingId) {
-        await updateProductAdmin(editingId, payload);
+        const res = await fetch(`/api/admin/products/${editingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error ?? "Gagal memperbarui produk");
+        }
         setMessage({ type: "success", text: "Produk berhasil diperbarui" });
       } else {
-        await createProductAdmin(payload);
+        const res = await fetch("/api/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error ?? "Gagal menambah produk");
+        }
         setMessage({ type: "success", text: "Produk berhasil ditambahkan" });
       }
 
@@ -94,7 +104,13 @@ export default function AdminProducts() {
   async function handleDelete(id: string) {
     if (!window.confirm("Yakin ingin menghapus produk ini?")) return;
     try {
-      await deleteProductAdmin(id);
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Gagal menghapus produk");
+      }
       setMessage({ type: "success", text: "Produk berhasil dihapus" });
       await loadProducts();
     } catch (err: any) {

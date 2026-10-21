@@ -1,25 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
-  Trash2,
-  Edit2,
   Mail,
   MapPin,
   Calendar,
   Building2,
 } from "lucide-react";
-import {
-  getRfqById,
-  updateRfqStatusAdmin,
-  addAdminNote,
-  getQuotationsByRfq,
-} from "@/services/rfq.service";
-import { createQuotation } from "@/services/quotation.service";
 import { formatRupiah, formatDate } from "@/lib/format";
 import { RFQ_STATUS_LABELS } from "@/types/rfq";
+
+interface RfqItem {
+  id: string;
+  product_name: string;
+  product_details: string;
+  quantity: number;
+  unit: string;
+}
+
+interface RfqHistory {
+  id: string;
+  new_status: string;
+  note: string | null;
+  created_at: string;
+}
+
+interface Quotation {
+  id: string;
+  quotation_number: string;
+  version: number;
+  total: number;
+  status: string;
+}
+
+interface RfqDetail {
+  id: string;
+  rfq_number: string;
+  organization_name: string;
+  contact_name: string;
+  business_email: string;
+  delivery_location: string;
+  required_date: string;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  items: RfqItem[];
+  history: RfqHistory[];
+  quotations: Quotation[];
+}
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: "bg-amber-50 text-amber-600 border-amber-100",
@@ -33,14 +63,15 @@ const STATUS_COLORS: Record<string, string> = {
   converted_to_order: "bg-emerald-50 text-emerald-600 border-emerald-100",
 };
 
-export default async function AdminRfqDetail({
+const STATUS_LABEL = (status: string) =>
+  RFQ_STATUS_LABELS[status as keyof typeof RFQ_STATUS_LABELS] || status;
+
+export default function AdminRfqDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const [rfq, setRfq] = useState<any>(null);
-  const [quotations, setQuotations] = useState<any[]>([]);
+  const [rfq, setRfq] = useState<RfqDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState("");
   const [newQuotation, setNewQuotation] = useState({
@@ -51,66 +82,111 @@ export default async function AdminRfqDetail({
     items: [{ productName: "", quantity: 1, unit: "pcs", unitPrice: "0" }],
   });
   const [openQuotationForm, setOpenQuotationForm] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const [rfqId, setRfqId] = useState<string>("");
 
   useEffect(() => {
-    loadRfq();
-  }, [id]);
+    let aktif = true;
 
-  async function loadRfq() {
+    async function resolveId() {
+      const { id } = await params;
+      if (aktif) setRfqId(id);
+    }
+
+    resolveId();
+    return () => {
+      aktif = false;
+    };
+  }, [params]);
+
+  const loadRfq = useCallback(async (id: string) => {
     try {
       const res = await fetch(`/api/rfqs/${id}`);
       const data = await res.json();
       if (data.success) {
         setRfq(data.data);
-        setQuotations(data.data.items || []);
+      } else {
+        setMessage({
+          type: "error",
+          text: data.error ?? "Gagal memuat detail RFQ",
+        });
       }
     } catch (err) {
       console.error(err);
+      setMessage({ type: "error", text: "Gagal memuat detail RFQ" });
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!rfqId) return;
+    setLoading(true);
+    loadRfq(rfqId);
+  }, [rfqId, loadRfq]);
 
   async function handleStatusChange(newStatus: string) {
     if (!rfq) return;
+    setBusy(true);
     try {
-      await updateRfqStatusAdmin({
-        rfqId: id,
-        newStatus,
-        note: newStatus === "rejected" ? "" : undefined,
-        cookies: () => ({} as any),
+      const res = await fetch(`/api/rfqs/${rfq.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
       });
-      setMessage({ type: "success", text: `Status diubah menjadi ${RFQ_STATUS_LABELS[newStatus as keyof typeof RFQ_STATUS_LABELS] || newStatus}` });
-      await loadRfq();
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Gagal mengubah status");
+      }
+      setMessage({
+        type: "success",
+        text: `Status diubah menjadi ${STATUS_LABEL(newStatus)}`,
+      });
+      await loadRfq(rfq.id);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message ?? "Gagal mengubah status" });
+    } finally {
+      setBusy(false);
     }
   }
 
   async function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
-    if (!newNote.trim()) return;
+    if (!rfq || !newNote.trim()) return;
+    setBusy(true);
     try {
-      await addAdminNote({
-        rfqId: id,
-        note: newNote,
-        cookies: () => ({} as any),
+      const res = await fetch(`/api/rfqs/${rfq.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: newNote }),
       });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Gagal menambah catatan");
+      }
       setNewNote("");
       setMessage({ type: "success", text: "Catatan berhasil ditambahkan" });
-      await loadRfq();
+      await loadRfq(rfq.id);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message ?? "Gagal menambah catatan" });
+    } finally {
+      setBusy(false);
     }
   }
 
   async function handleCreateQuotation(e: React.FormEvent) {
     e.preventDefault();
+    if (!rfq) return;
+    setBusy(true);
     try {
       const items = newQuotation.items.filter((i) => i.productName.trim());
       const payload = {
-        rfqId: id,
+        rfqId: rfq.id,
         validUntil: newQuotation.validUntil,
         shippingCost: parseFloat(newQuotation.shippingCost) || 0,
         discount: parseFloat(newQuotation.discount) || 0,
@@ -129,24 +205,50 @@ export default async function AdminRfqDetail({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Gagal membuat quotation");
-
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Gagal membuat quotation"
+        );
+      }
+
       setMessage({
         type: "success",
         text: `Quotation ${data.data.quotationNumber} versi ${data.data.version} berhasil dibuat`,
       });
       setOpenQuotationForm(false);
-      await loadRfq();
+      await loadRfq(rfq.id);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message ?? "Gagal membuat quotation" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function convertQuotation(quotationId: string) {
+    if (!window.confirm("Yakin ingin mengonversi quotation ini menjadi pesanan?"))
+      return;
+    try {
+      const res = await fetch(`/api/quotations/${quotationId}/convert`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Gagal mengonversi");
+      }
+      setMessage({ type: "success", text: "Quotation berhasil dikonversi" });
+      if (rfq) await loadRfq(rfq.id);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message ?? "Gagal mengonversi quotation" });
     }
   }
 
   if (loading) {
     return (
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">Memuat detail RFQ...</div>
+        <div className="text-center text-muted">Memuat detail RFQ...</div>
       </section>
     );
   }
@@ -155,7 +257,7 @@ export default async function AdminRfqDetail({
     return (
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-heading">RFQ Tidak Ditemukan</h1>
+          <h1 className="text-2xl font-bold text-heading mb-4">RFQ Tidak Ditemukan</h1>
           <Link href="/admin/rfqs" className="text-primary hover:underline">
             Kembali ke daftar RFQ
           </Link>
@@ -164,6 +266,8 @@ export default async function AdminRfqDetail({
     );
   }
 
+  const quotations = rfq.quotations ?? [];
+
   return (
     <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -171,23 +275,40 @@ export default async function AdminRfqDetail({
           <h1 className="text-2xl font-bold text-heading mb-2">
             Detail RFQ {rfq.rfq_number}
           </h1>
-          <p className="text-muted">
-            Status:{ " "}
-            <span
-              className={`text-sm font-bold px-2 py-0.5 rounded-full border ${
-                STATUS_COLORS[rfq.status] || "border-neutral-200 text-neutral-600"
-              }`}
-            >
-              {RFQ_STATUS_LABELS[rfq.status as keyof typeof RFQ_STATUS_LABELS] || rfq.status}
+          <p className="text-muted flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+              {rfq.organization_name}
+            </span>
+            <span className="flex items-center gap-1">
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              {rfq.business_email}
+            </span>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+              {rfq.delivery_location}
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" aria-hidden="true" />
+              {formatDate(rfq.required_date)}
             </span>
           </p>
         </div>
-        <Link
-          href="/admin/rfqs"
-          className="text-primary hover:underline flex items-center gap-1"
-        >
-          <ChevronLeft className="h-4 w-4" /> Kembali ke Daftar
-        </Link>
+        <div className="flex flex-col items-start md:items-end gap-2">
+          <span
+            className={`text-sm font-bold px-3 py-1 rounded-full border ${
+              STATUS_COLORS[rfq.status] || "border-neutral-200 text-neutral-600"
+            }`}
+          >
+            {STATUS_LABEL(rfq.status)}
+          </span>
+          <Link
+            href="/admin/rfqs"
+            className="text-primary hover:underline flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Kembali ke Daftar
+          </Link>
+        </div>
       </div>
 
       {message && (
@@ -217,7 +338,10 @@ export default async function AdminRfqDetail({
                 <dd className="text-heading">{rfq.contact_name}</dd>
                 <dt className="text-muted">Email</dt>
                 <dd className="text-heading">
-                  <a href={`mailto:${rfq.business_email}`} className="text-primary hover:underline">
+                  <a
+                    href={`mailto:${rfq.business_email}`}
+                    className="text-primary hover:underline"
+                  >
                     {rfq.business_email}
                   </a>
                 </dd>
@@ -229,18 +353,25 @@ export default async function AdminRfqDetail({
                 Detail Kebutuhan Grosir
               </h2>
               <div className="space-y-3">
-                {rfq.items.map((item: any) => (
-                  <div key={item.id} className="p-4 rounded-lg bg-neutral-50 border border-border">
+                {rfq.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 rounded-lg bg-neutral-50 border border-border"
+                  >
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-heading">{item.product_name}</h4>
+                      <h4 className="font-semibold text-heading">
+                        {item.product_name}
+                      </h4>
                       <span className="text-xs font-medium text-primary">
-                        {formatRupiah(item.unit_price || 0)} / {item.unit}
+                        {item.unit}
                       </span>
                     </div>
                     <p className="text-sm text-muted">{item.product_details}</p>
                     <div className="flex justify-between mt-2">
                       <span className="text-sm font-medium">Jumlah</span>
-                      <span className="text-sm font-bold">{item.quantity} {item.unit}</span>
+                      <span className="text-sm font-bold">
+                        {item.quantity} {item.unit}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -264,7 +395,9 @@ export default async function AdminRfqDetail({
 
             {rfq.admin_notes && (
               <div>
-                <h3 className="font-bold text-heading mb-2">Catatan Internal Admin</h3>
+                <h3 className="font-bold text-heading mb-2">
+                  Catatan Internal Admin
+                </h3>
                 <p className="text-sm text-muted">{rfq.admin_notes}</p>
               </div>
             )}
@@ -279,117 +412,110 @@ export default async function AdminRfqDetail({
             <div className="space-y-2">
               {rfq.status === "submitted" && (
                 <>
-                  <button
+                  <StatusButton
+                    label="Sedang Ditinjau"
                     onClick={() => handleStatusChange("under_review")}
-                    className="w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors"
-                  >
-                    Sedang Ditinjau
-                  </button>
-                  <button
+                    disabled={busy}
+                  />
+                  <StatusButton
+                    label="Tolak Permintaan"
                     onClick={() => handleStatusChange("rejected")}
-                    className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Tolak Permintaan
-                  </button>
+                    disabled={busy}
+                    tone="danger"
+                  />
                 </>
               )}
               {rfq.status === "under_review" && (
                 <>
-                  <button
+                  <StatusButton
+                    label="Perlu Informasi Tambahan"
                     onClick={() => handleStatusChange("needs_information")}
-                    className="w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors"
-                  >
-                    Perlu Informasi Tambahan
-                  </button>
-                  <button
+                    disabled={busy}
+                  />
+                  <StatusButton
+                    label="Buat Penawaran (Quotation)"
                     onClick={() => handleStatusChange("quoted")}
-                    className="w-full py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
-                  >
-                    Buat Penawaran (Quotation)
-                  </button>
-                  <button
+                    disabled={busy}
+                    tone="primary"
+                  />
+                  <StatusButton
+                    label="Tolak"
                     onClick={() => handleStatusChange("rejected")}
-                    className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Tolak
-                  </button>
+                    disabled={busy}
+                    tone="danger"
+                  />
                 </>
               )}
               {rfq.status === "needs_information" && (
                 <>
-                  <button
+                  <StatusButton
+                    label="Kembali ke Ditinjau"
                     onClick={() => handleStatusChange("under_review")}
-                    className="w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors"
-                  >
-                    Kembali ke Ditinjau
-                  </button>
-                  <button
+                    disabled={busy}
+                  />
+                  <StatusButton
+                    label="Tolak"
                     onClick={() => handleStatusChange("rejected")}
-                    className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Tolak
-                  </button>
+                    disabled={busy}
+                    tone="danger"
+                  />
                 </>
               )}
               {rfq.status === "quoted" && (
                 <>
-                  <button
+                  <StatusButton
+                    label="Negosiasi"
                     onClick={() => handleStatusChange("negotiation")}
-                    className="w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors"
-                  >
-                    Negosiasi
-                  </button>
-                  <button
+                    disabled={busy}
+                  />
+                  <StatusButton
+                    label="Terima Penawaran"
                     onClick={() => handleStatusChange("accepted")}
-                    className="w-full py-2.5 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors"
-                  >
-                    Terima Penawaran
-                  </button>
-                  <button
+                    disabled={busy}
+                    tone="success"
+                  />
+                  <StatusButton
+                    label="Tolak"
                     onClick={() => handleStatusChange("rejected")}
-                    className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Tolak
-                  </button>
-                  <button
+                    disabled={busy}
+                    tone="danger"
+                  />
+                  <StatusButton
+                    label="Kedaluwarsa"
                     onClick={() => handleStatusChange("expired")}
-                    className="w-full py-2.5 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
-                  >
-                    Kedaluwarsa
-                  </button>
+                    disabled={busy}
+                    tone="muted"
+                  />
                 </>
               )}
               {rfq.status === "negotiation" && (
                 <>
-                  <button
+                  <StatusButton
+                    label="Revisi Penawaran"
                     onClick={() => handleStatusChange("quoted")}
-                    className="w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors"
-                  >
-                    Revisi Penawaran
-                  </button>
-                  <button
+                    disabled={busy}
+                  />
+                  <StatusButton
+                    label="Terima Penawaran"
                     onClick={() => handleStatusChange("accepted")}
-                    className="w-full py-2.5 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors"
-                  >
-                    Terima Penawaran
-                  </button>
-                  <button
+                    disabled={busy}
+                    tone="success"
+                  />
+                  <StatusButton
+                    label="Tolak"
                     onClick={() => handleStatusChange("rejected")}
-                    className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Tolak
-                  </button>
+                    disabled={busy}
+                    tone="danger"
+                  />
                 </>
               )}
               {rfq.status === "accepted" && (
-                <>
-                  <button
-                    onClick={() => handleStatusChange("converted_to_order")}
-                    className="w-full py-2.5 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors"
-                  >
-                    Konversi ke Pesanan
-                  </button>
-                </>
+                <StatusButton
+                  label="Konversi ke Pesanan"
+                  onClick={() => handleStatusChange("converted_to_order")}
+                  disabled={busy}
+                  tone="success"
+                />
               )}
             </div>
           </div>
@@ -407,7 +533,8 @@ export default async function AdminRfqDetail({
               />
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-orange-500 transition-colors"
+                disabled={busy || !newNote.trim()}
+                className="w-full py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-orange-500 transition-colors disabled:opacity-60"
               >
                 Simpan Catatan
               </button>
@@ -415,7 +542,9 @@ export default async function AdminRfqDetail({
           </div>
 
           {/* Buat quotation */}
-          {rfq.status === "under_review" || rfq.status === "quoted" || rfq.status === "negotiation" ? (
+          {rfq.status === "under_review" ||
+          rfq.status === "quoted" ||
+          rfq.status === "negotiation" ? (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
               <h3 className="font-bold text-heading mb-4">Buat Quotation</h3>
               <p className="text-sm text-muted mb-4">
@@ -435,10 +564,15 @@ export default async function AdminRfqDetail({
           <div className="bg-white border border-border rounded-xl p-6">
             <h3 className="font-bold text-heading mb-4">Riwayat Status</h3>
             <div className="space-y-3 max-h-60 overflow-y-auto">
-              {rfq.history.map((h: any) => (
-                <div key={h.id} className="flex justify-between items-start text-sm">
+              {rfq.history.map((h) => (
+                <div
+                  key={h.id}
+                  className="flex justify-between items-start text-sm"
+                >
                   <div>
-                    <div className="text-heading">{h.new_status.replace(/_/g, " ")}</div>
+                    <div className="text-heading">
+                      {h.new_status.replace(/_/g, " ")}
+                    </div>
                     <div className="text-xs text-muted">
                       {formatDate(h.created_at)}
                     </div>
@@ -466,16 +600,29 @@ export default async function AdminRfqDetail({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border bg-neutral-50">
-                  <th className="px-6 py-3 text-sm font-semibold text-muted">Nomor</th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Versi</th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Total</th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Status</th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Aksi</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted">
+                    Nomor
+                  </th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                    Versi
+                  </th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                    Total
+                  </th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-center">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {quotations.map((q) => (
-                  <tr key={q.id} className="border-b border-border last:border-0">
+                  <tr
+                    key={q.id}
+                    className="border-b border-border last:border-0"
+                  >
                     <td className="px-6 py-4 text-sm font-medium text-heading">
                       {q.quotation_number}
                     </td>
@@ -527,6 +674,7 @@ export default async function AdminRfqDetail({
               <button
                 onClick={() => setOpenQuotationForm(false)}
                 className="text-muted hover:text-heading"
+                aria-label="Tutup form quotation"
               >
                 ✕
               </button>
@@ -540,7 +688,10 @@ export default async function AdminRfqDetail({
                   type="date"
                   value={newQuotation.validUntil}
                   onChange={(e) =>
-                    setNewQuotation({ ...newQuotation, validUntil: e.target.value })
+                    setNewQuotation({
+                      ...newQuotation,
+                      validUntil: e.target.value,
+                    })
                   }
                   className="w-full pl-3 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
                   required
@@ -555,7 +706,10 @@ export default async function AdminRfqDetail({
                     type="number"
                     value={newQuotation.shippingCost}
                     onChange={(e) =>
-                      setNewQuotation({ ...newQuotation, shippingCost: e.target.value })
+                      setNewQuotation({
+                        ...newQuotation,
+                        shippingCost: e.target.value,
+                      })
                     }
                     className="w-full pl-3 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -568,7 +722,10 @@ export default async function AdminRfqDetail({
                     type="number"
                     value={newQuotation.discount}
                     onChange={(e) =>
-                      setNewQuotation({ ...newQuotation, discount: e.target.value })
+                      setNewQuotation({
+                        ...newQuotation,
+                        discount: e.target.value,
+                      })
                     }
                     className="w-full pl-3 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -593,14 +750,19 @@ export default async function AdminRfqDetail({
                 </label>
                 <div className="space-y-3">
                   {newQuotation.items.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 sm:grid-cols-4 gap-3"
+                    >
                       <input
                         value={item.productName}
                         onChange={(e) =>
                           setNewQuotation({
                             ...newQuotation,
                             items: newQuotation.items.map((it, i) =>
-                              i === idx ? { ...it, productName: e.target.value } : it
+                              i === idx
+                                ? { ...it, productName: e.target.value }
+                                : it
                             ),
                           })
                         }
@@ -614,7 +776,9 @@ export default async function AdminRfqDetail({
                           setNewQuotation({
                             ...newQuotation,
                             items: newQuotation.items.map((it, i) =>
-                              i === idx ? { ...it, quantity: Number(e.target.value) || 1 } : it
+                              i === idx
+                                ? { ...it, quantity: Number(e.target.value) || 1 }
+                                : it
                             ),
                           })
                         }
@@ -644,7 +808,9 @@ export default async function AdminRfqDetail({
                           setNewQuotation({
                             ...newQuotation,
                             items: newQuotation.items.map((it, i) =>
-                              i === idx ? { ...it, unitPrice: e.target.value } : it
+                              i === idx
+                                ? { ...it, unitPrice: e.target.value }
+                                : it
                             ),
                           })
                         }
@@ -658,7 +824,15 @@ export default async function AdminRfqDetail({
                     onClick={() =>
                       setNewQuotation({
                         ...newQuotation,
-                        items: [...newQuotation.items, { productName: "", quantity: 1, unit: "pcs", unitPrice: "0" }],
+                        items: [
+                          ...newQuotation.items,
+                          {
+                            productName: "",
+                            quantity: 1,
+                            unit: "pcs",
+                            unitPrice: "0",
+                          },
+                        ],
                       })
                     }
                     className="text-sm text-primary hover:text-orange-600 flex items-center gap-1"
@@ -677,7 +851,8 @@ export default async function AdminRfqDetail({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors"
+                  disabled={busy}
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-500 transition-colors disabled:opacity-60"
                 >
                   Terbitkan Quotation
                 </button>
@@ -690,15 +865,40 @@ export default async function AdminRfqDetail({
   );
 }
 
-async function convertQuotation(quotationId: string) {
-  if (!window.confirm("Yakin ingin mengonversi quotation ini menjadi pesanan?")) return;
-  try {
-    const res = await fetch(`/api/quotations/${quotationId}/convert`, {
-      method: "POST",
-    });
-    if (!res.ok) throw new Error("Gagal mengonversi");
-    window.location.reload();
-  } catch (err: any) {
-    alert(err.message ?? "Gagal mengonversi quotation");
-  }
+type StatusButtonTone = "default" | "primary" | "success" | "danger" | "muted";
+
+const TONE_CLASSES: Record<StatusButtonTone, string> = {
+  default:
+    "w-full py-2.5 rounded-lg border border-border text-heading hover:bg-neutral-50 transition-colors",
+  primary:
+    "w-full py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-orange-500 transition-colors",
+  success:
+    "w-full py-2.5 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors",
+  danger:
+    "w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors",
+  muted:
+    "w-full py-2.5 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors",
+};
+
+function StatusButton({
+  label,
+  onClick,
+  disabled,
+  tone = "default",
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  tone?: StatusButtonTone;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`${TONE_CLASSES[tone]} disabled:opacity-60`}
+    >
+      {label}
+    </button>
+  );
 }
