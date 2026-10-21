@@ -1,35 +1,78 @@
+"use client";
+
 import Link from "next/link";
-import {
-  getPublishedProducts,
-  getCategories,
-} from "@/services/product.service";
-import { getAllOrdersAdmin } from "@/services/order.service";
-import { getAllRfqsAdmin } from "@/services/rfq.service";
+import { useEffect, useState } from "react";
 
-export default async function AdminDashboard() {
-  const [products, categories, orders, rfqs] = await Promise.allSettled([
-    getPublishedProducts(),
-    getCategories(),
-    getAllOrdersAdmin(),
-    getAllRfqsAdmin({ cookies: () => ({} as any) }),
-  ]);
+interface AdminProduct {
+  id: string;
+  name: string;
+  category?: string;
+}
 
-  const productCount =
-    products.status === "fulfilled" ? products.value.length : 0;
-  const categoryCount =
-    categories.status === "fulfilled" ? categories.value.length : 0;
-  const orderCount =
-    orders.status === "fulfilled" ? orders.value.length : 0;
-  const rfqCount = rfqs.status === "fulfilled" ? rfqs.value.total : 0;
+interface AdminOrder {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  total: number;
+  status: string;
+}
 
-  const pendingOrders =
-    orders.status === "fulfilled"
-      ? orders.value.filter((o) => o.status === "pending").length
-      : 0;
-  const pendingRfqs =
-    rfqs.status === "fulfilled"
-      ? rfqs.value.rfqs.filter((r) => r.status === "submitted").length
-      : 0;
+interface AdminRfq {
+  id: string;
+  rfq_number: string;
+  organization_name: string;
+  status: string;
+}
+
+export default function AdminDashboard() {
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [rfqs, setRfqs] = useState<AdminRfq[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let aktif = true;
+
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [produkRes, pesananRes, rfqRes] = await Promise.all([
+          fetch("/api/products"),
+          fetch("/api/admin/orders"),
+          fetch("/api/admin/rfqs?pageSize=20"),
+        ]);
+
+        const produkJson = await produkRes.json();
+        const pesananJson = await pesananRes.json();
+        const rfqJson = await rfqRes.json();
+
+        if (!aktif) return;
+
+        setProducts(produkJson.success ? produkJson.data : []);
+        setOrders(pesananJson.success ? pesananJson.data : []);
+        setRfqs(rfqJson.success ? rfqJson.data?.rfqs ?? [] : []);
+      } catch (err) {
+        console.error("Gagal memuat data dashboard admin:", err);
+      } finally {
+        if (aktif) setLoading(false);
+      }
+    }
+
+    loadData();
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const productCount = products.length;
+  const categoryCount = new Set(
+    products.map((p) => p.category).filter(Boolean)
+  ).size;
+  const orderCount = orders.length;
+  const rfqCount = rfqs.length;
+
+  const pendingOrders = orders.filter((o) => o.status === "pending").length;
+  const pendingRfqs = rfqs.filter((r) => r.status === "submitted").length;
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -42,25 +85,25 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Produk Aktif"
-          value={productCount}
+          value={loading ? "..." : productCount}
           icon="📦"
           color="bg-orange-50 text-orange-600 border-orange-100"
         />
         <StatCard
           title="Kategori"
-          value={categoryCount}
+          value={loading ? "..." : categoryCount}
           icon="🏷️"
           color="bg-blue-50 text-blue-600 border-blue-100"
         />
         <StatCard
           title="Pesanan Tertunda"
-          value={pendingOrders}
+          value={loading ? "..." : pendingOrders}
           icon="⏳"
           color="bg-amber-50 text-amber-600 border-amber-100"
         />
         <StatCard
           title="RFQ Masuk"
-          value={pendingRfqs}
+          value={loading ? "..." : pendingRfqs}
           icon="📋"
           color="bg-blue-50 text-blue-600 border-blue-100"
         />
@@ -73,28 +116,26 @@ export default async function AdminDashboard() {
           <h3 className="font-bold text-heading mb-4 flex items-center gap-2">
             <span>🛒</span> Pesanan Terbaru
           </h3>
-          {orders.status === "fulfilled" && orders.value.length > 0 ? (
+          {loading ? (
+            <p className="text-sm text-muted text-center py-4">Memuat pesanan...</p>
+          ) : orders.length > 0 ? (
             <ul className="space-y-3">
-              {orders.value
-                .slice(0, 5)
-                .map((o) => (
-                  <li key={o.id} className="flex justify-between items-start">
-                    <div>
-                      <div className="text-sm font-medium text-heading">
-                        {o.order_number}
-                      </div>
-                      <div className="text-xs text-muted">
-                        {o.customer_name}
-                      </div>
+              {orders.slice(0, 5).map((o) => (
+                <li key={o.id} className="flex justify-between items-start">
+                  <div>
+                    <div className="text-sm font-medium text-heading">
+                      {o.order_number}
                     </div>
-                    <span className="text-sm font-bold text-primary">
-                      {new Intl.NumberFormat("id-ID", {
-                        style: "currency",
-                        currency: "IDR",
-                      }).format(o.total)}
-                    </span>
-                  </li>
-                ))}
+                    <div className="text-xs text-muted">{o.customer_name}</div>
+                  </div>
+                  <span className="text-sm font-bold text-primary">
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                    }).format(o.total)}
+                  </span>
+                </li>
+              ))}
             </ul>
           ) : (
             <p className="text-sm text-muted text-center py-4">
@@ -108,17 +149,17 @@ export default async function AdminDashboard() {
           <h3 className="font-bold text-heading mb-4 flex items-center gap-2">
             <span>📋</span> RFQ Terbaru
           </h3>
-          {rfqs.status === "fulfilled" && rfqs.value.rfqs.length > 0 ? (
+          {loading ? (
+            <p className="text-sm text-muted text-center py-4">Memuat RFQ...</p>
+          ) : rfqs.length > 0 ? (
             <ul className="space-y-3">
-              {rfqs.value.rfqs.slice(0, 5).map((r) => (
+              {rfqs.slice(0, 5).map((r) => (
                 <li key={r.id} className="flex justify-between items-start">
                   <div>
                     <div className="text-sm font-medium text-heading">
                       {r.rfq_number}
                     </div>
-                    <div className="text-xs text-muted">
-                      {r.organization_name}
-                    </div>
+                    <div className="text-xs text-muted">{r.organization_name}</div>
                   </div>
                   <span
                     className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -133,9 +174,7 @@ export default async function AdminDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted text-center py-4">
-              Belum ada RFQ.
-            </p>
+            <p className="text-sm text-muted text-center py-4">Belum ada RFQ.</p>
           )}
         </div>
 
