@@ -1,133 +1,461 @@
 @import "tailwindcss";
 
+/* ==================================================================
+   TOKEN DESAIN KWU
+   Semua warna, radius, bayangan, dan durasi animasi dikendalikan
+   dari satu tempat agar konsisten di seluruh aplikasi.
+   ================================================================== */
+
 @theme {
-  /* Warna utama KWU (design tokens) - kontras tinggi & armonik */
-  --color-orange-50: #FFF7ED;
-  --color-orange-100: #FFEDD5;
-  --color-orange-500: #F97316;
-  --color-orange-600: #EA580C;
-  --color-orange-900: #7C2D12;
+  /* ----- Warna merek: orange (utama) ----- */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
 
-  --color-blue-50: #EFF6FF;
-  --color-blue-100: #DBEAFE;
-  --color-blue-500: #3B82F6;
-  --color-blue-600: #2563EB;
-  --color-blue-900: #1E3A8A;
+  /* ----- Warna pendukung: biru (institutional) ----- */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
 
-  /* Semantik warna UI */
+  /* ----- Warna netral (teks, garis, latar) ----- */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+
+  /* ----- Warna status ----- */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-600: #2563eb;
+  --color-info-800: #1e40af;
+
+  /* ----- Warna semantik UI ----- */
   --color-primary: var(--color-orange-600);
   --color-primary-hover: var(--color-orange-500);
+  --color-primary-soft: var(--color-orange-50);
   --color-secondary: var(--color-blue-600);
+  --color-secondary-soft: var(--color-blue-50);
   --color-surface: #ffffff;
-  --color-surface-muted: #F8FAFC;
-  --color-border: #E2E8F0;
+  --color-surface-muted: var(--color-neutral-50);
+  --color-surface-inverse: var(--color-neutral-900);
+  --color-border: var(--color-neutral-200);
+  --color-border-strong: var(--color-neutral-300);
 
-  /* Warna teks dengan kontras tinggi (WCAG AA) */
-  --color-heading: #0F172A;
-  --color-body: #334155;
-  --color-muted: #64748B;
-  /* Alias yang dipakai pada beberapa komponen */
+  /* ----- Warna teks (semua lolos kontras WCAG AA) ----- */
+  --color-heading: #0f172a; /* rasio 17.4:1 di atas putih */
+  --color-body: #334155; /* rasio 10.4:1 di atas putih */
+  --color-muted: #526079; /* rasio 6.4:1 di atas putih */
+  --color-inverse: #f8fafc;
   --color-foreground: var(--color-heading);
 
+  /* ----- Tipografi ----- */
   --color-font-sans: var(--font-geist-sans);
-  --font-sans: var(--font-geist-sans);
+  --color-font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+
+  /* ----- Radius ----- */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  /* ----- Bayangan ----- */
+  --shadow-soft: 0 1px 2px 0 rgb(15 23 42 / 0.04),
+    0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-card: 0 4px 6px -1px rgb(15 23 42 / 0.07),
+    0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-card-hover: 0 20px 25px -5px rgb(15 23 42 / 0.12),
+    0 8px 10px -6px rgb(15 23 42 / 0.08);
+  --shadow-pop: 0 24px 48px -12px rgb(15 23 42 / 0.22);
+
+  /* ----- Kurva animasi ----- */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ----- Titik henti ===== */
+  --breakpoint-xs: 25rem; /* 400px, untuk layar ponsel kecil */
 }
+
+/* ==================================================================
+   DASAR
+   ================================================================== */
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
-  --foreground: #0F172A;
+  --foreground: var(--color-heading);
+  --header-height: 4rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0f19;
-    --foreground: #f8fafc;
-  }
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  /* Haluskan navigasi antar halaman */
+  scroll-behavior: smooth;
+  /* Ruang untuk header lengket saat berpindah anchor */
+  scroll-padding-top: calc(var(--header-height) + 1rem);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--color-body);
-  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
-    Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.65;
+  /* Cegah gulir horizontal akibat elemen yang meluber */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* ===== ANIMASI ===== */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Judul panjang agar tidak meninggalkan baris yatim */
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+  color: var(--color-heading);
+  letter-spacing: -0.015em;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+p {
+  text-wrap: pretty;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(234, 88, 12, 0); }
+/* Placeholder formulir tetap terbaca */
+::placeholder {
+  color: var(--color-neutral-400);
+  opacity: 1;
 }
 
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+/* Pilihan teks */
+::selection {
+  background: var(--color-orange-200);
+  color: var(--color-orange-900);
 }
 
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+/* Scrollbar kustom */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) transparent;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.7s ease-out forwards;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 2s infinite;
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-300);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+  background-clip: content-box;
 }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.5s ease-out forwards;
-}
+/* ==================================================================
+   AKSESIBILITAS
+   ================================================================== */
 
-/* Delay varian untuk stagger */
-.animate-delay-100 { animation-delay: 100ms; }
-.animate-delay-200 { animation-delay: 200ms; }
-.animate-delay-300 { animation-delay: 300ms; }
-.animate-delay-400 { animation-delay: 400ms; }
-
-/* Fokus indikator jelas untuk navigasi keyboard (aksesibilitas) */
 :focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Jangan hilangkan indikator fokus untuk navigasi keyboard */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.sr-only {
+/* Lompatan ke konten utama */
+.skip-link {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: var(--shadow-pop);
+  transition: top 200ms var(--ease-out-soft);
 }
 
-/* Kurangi gerakan jika pengguna memilikinya */
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ==================================================================
+   ANIMASI
+   ================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(249 115 22 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgb(249 115 22 / 0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--ease-out-soft) both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.65s var(--ease-out-soft) both;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.25s var(--ease-out-soft) both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.45s var(--ease-out-soft) both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.45s var(--ease-out-soft) both;
+}
+
+.animate-slide-up-sheet {
+  animation: slideUpSheet 0.3s var(--ease-out-soft) both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.4s var(--ease-in-out-soft) infinite;
+}
+
+.animate-float {
+  animation: float 7s var(--ease-in-out-soft) infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 1.1s linear infinite;
+}
+
+/* Delay varian untuk efek beruntun (stagger) */
+.animate-delay-75 {
+  animation-delay: 75ms;
+}
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.animate-delay-150 {
+  animation-delay: 150ms;
+}
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Placeholder memuat dengan kilau halus */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-200) 25%,
+    var(--color-neutral-100) 37%,
+    var(--color-neutral-200) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Tampilkan konten di bawah layar saat di-scroll */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
+/* Sembunyikan scrollbar tapi tetap bisa digulir */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Gradien tipis untuk aksen visual */
+.accent-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-orange-100),
+    var(--color-blue-100)
+  );
+}
+
+/* Kurangi gerakan untuk pengguna yang memerlukannya */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
@@ -136,20 +464,4 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Utilitas kontras teks */
-.text-heading { color: var(--color-heading); }
-.text-body { color: var(--color-body); }
-.text-muted { color: var(--color-muted); }
-
-/* Gambar placeholder dengan latar warna KWU */
-.img-placeholder {
-  background: linear-gradient(135deg, var(--color-orange-100), var(--color-blue-100));
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
