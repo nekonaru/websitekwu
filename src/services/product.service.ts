@@ -104,7 +104,7 @@ const MOCK_PRODUCTS: Product[] = PRODUCTS.map((p) => ({
 /* ------------------------------------------------------------------ */
 
 /**
- * Men从哪里 daftar produk berasal.
+ * Menentukan dari mana daftar produk berasal.
  * "database" berarti data diambil dari Supabase.
  * "contoh" berarti memakai data contoh sebagai fallback.
  */

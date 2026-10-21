@@ -166,7 +166,6 @@ h2,
 h3,
 h4 {
   text-wrap: balance;
-  color: var(--color-heading);
   letter-spacing: -0.015em;
 }
 
