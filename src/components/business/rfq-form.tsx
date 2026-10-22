@@ -126,55 +126,55 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       {serverError && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+        <div className="p-4 rounded-lg bg-danger-50 border border-danger-100 text-danger-800 text-sm">
           {serverError}
         </div>
       )}
 
       {/* Informasi perusahaan */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+        <h2 className="text-lg font-bold text-heading flex items-center gap-2">
           <Building2 className="h-5 w-5 text-primary" aria-hidden="true" />
           Informasi Perusahaan / Institusi
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Nama Perusahaan / Institusi <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-heading">
+              Nama Perusahaan / Institusi <span className="text-danger-600">*</span>
             </label>
             <input
               name="organizationName"
               value={form.organizationName}
               onChange={(e) => updateTopField("organizationName", e.target.value)}
-              className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                errors.organizationName ? "border-red-500" : ""
+              className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                errors.organizationName ? "border-danger-500" : ""
               }`}
               required
             />
             {hasSubmitted && errors.organizationName && (
-              <p className="text-xs text-red-600">{errors.organizationName[0]}</p>
+              <p className="text-xs text-danger-600">{errors.organizationName[0]}</p>
             )}
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Nama Kontak <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-heading">
+              Nama Kontak <span className="text-danger-600">*</span>
             </label>
             <input
               name="contactName"
               value={form.contactName}
               onChange={(e) => updateTopField("contactName", e.target.value)}
-              className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                errors.contactName ? "border-red-500" : ""
+              className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                errors.contactName ? "border-danger-500" : ""
               }`}
               required
             />
             {hasSubmitted && errors.contactName && (
-              <p className="text-xs text-red-600">{errors.contactName[0]}</p>
+              <p className="text-xs text-danger-600">{errors.contactName[0]}</p>
             )}
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Email Bisnis <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-heading">
+              Email Bisnis <span className="text-danger-600">*</span>
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" aria-hidden="true" />
@@ -183,14 +183,14 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                 type="email"
                 value={form.businessEmail}
                 onChange={(e) => updateTopField("businessEmail", e.target.value)}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.businessEmail ? "border-red-500" : ""
+                className={`w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                  errors.businessEmail ? "border-danger-500" : ""
                 }`}
                 required
               />
             </div>
             {hasSubmitted && errors.businessEmail && (
-              <p className="text-xs text-red-600">{errors.businessEmail[0]}</p>
+              <p className="text-xs text-danger-600">{errors.businessEmail[0]}</p>
             )}
           </div>
         </div>
@@ -198,7 +198,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
 
       {/* Detail kebutuhan grosir */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-foreground">
+        <h2 className="text-lg font-bold text-heading">
           Detail Kebutuhan Grosir
         </h2>
         <div className="space-y-3">
@@ -215,7 +215,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                   <button
                     type="button"
                     onClick={() => removeItem(index)}
-                    className="text-neutral-400 hover:text-red-600 p-1.5"
+                    className="text-neutral-400 hover:text-danger-600 p-1.5"
                     aria-label="Hapus produk ini"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -224,33 +224,33 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground">
-                    Nama Produk / SKU <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-heading">
+                    Nama Produk / SKU <span className="text-danger-600">*</span>
                   </label>
                   <input
                     value={item.productName}
                     onChange={(e) => updateField(index, "productName", e.target.value)}
-                    className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                      errors[`items_${index}_productName`] ? "border-red-500" : ""
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                      errors[`items_${index}_productName`] ? "border-danger-500" : ""
                     }`}
                     placeholder="Contoh: Buku Tulis A5"
                     required
                   />
                   {hasSubmitted && errors[`items_${index}_productName`] && (
-                    <p className="text-xs text-red-600">
+                    <p className="text-xs text-danger-600">
                       {errors[`items_${index}_productName`][0]}
                     </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground">
-                    Satuan <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-heading">
+                    Satuan <span className="text-danger-600">*</span>
                   </label>
                   <select
                     value={item.unit}
                     onChange={(e) => updateField(index, "unit", e.target.value)}
-                    className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                      errors[`items_${index}_unit`] ? "border-red-500" : ""
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                      errors[`items_${index}_unit`] ? "border-danger-500" : ""
                     }`}
                   >
                     {DEFAULT_UNITS.map((u) => (
@@ -260,33 +260,33 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                     ))}
                   </select>
                   {hasSubmitted && errors[`items_${index}_unit`] && (
-                    <p className="text-xs text-red-600">{errors[`items_${index}_unit`][0]}</p>
+                    <p className="text-xs text-danger-600">{errors[`items_${index}_unit`][0]}</p>
                   )}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Detail Produk / Spesifikasi <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-heading">
+                  Detail Produk / Spesifikasi <span className="text-danger-600">*</span>
                 </label>
                 <textarea
                   value={item.productDetails}
                   onChange={(e) => updateField(index, "productDetails", e.target.value)}
                   rows={3}
-                  className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                    errors[`items_${index}_productDetails`] ? "border-red-500" : ""
+                  className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                    errors[`items_${index}_productDetails`] ? "border-danger-500" : ""
                   }`}
                   placeholder="Spesifikasi, varian, atau kebutuhan khusus"
                   required
                 ></textarea>
                 {hasSubmitted && errors[`items_${index}_productDetails`] && (
-                  <p className="text-xs text-red-600">
+                  <p className="text-xs text-danger-600">
                     {errors[`items_${index}_productDetails`][0]}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Jumlah <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-heading">
+                  Jumlah <span className="text-danger-600">*</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <button
@@ -310,7 +310,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                     onChange={(e) =>
                       updateField(index, "quantity", parseInt(e.target.value, 10) || 1)
                     }
-                    className="w-16 pl-3 pr-4 py-2.5 border border-border rounded-lg text-center text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-16 rounded-xl border border-border bg-white px-2 py-2.5 text-center text-heading shadow-soft transition-shadow duration-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-orange-100"
                     required
                   />
                   <button
@@ -322,7 +322,7 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
                   </button>
                 </div>
                 {hasSubmitted && errors[`items_${index}_quantity`] && (
-                  <p className="text-xs text-red-600">
+                  <p className="text-xs text-danger-600">
                     {errors[`items_${index}_quantity`][0]}
                   </p>
                 )}
@@ -342,20 +342,20 @@ export function RfqForm({ onSubmit, loading }: RfqFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Tanggal Kebutuhan <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-heading">
+              Tanggal Kebutuhan <span className="text-danger-600">*</span>
             </label>
             <input
               type="date"
               value={form.requiredDate}
               onChange={(e) => updateTopField("requiredDate", e.target.value)}
-              className={`w-full pl-3 pr-4 py-2.5 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
-                errors.requiredDate ? "border-red-500" : ""
+              className={`w-full rounded-xl border bg-white px-4 py-3 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100 ${
+                errors.requiredDate ? "border-danger-500" : ""
               }`}
               required
             />
             {hasSubmitted && errors.requiredDate && (
-              <p className="text-xs text-red-600">{errors.requiredDate[0]}</p>
+              <p className="text-xs text-danger-600">{errors.requiredDate[0]}</p>
             )}
           </div>
         </div>

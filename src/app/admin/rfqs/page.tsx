@@ -18,13 +18,13 @@ interface AdminRfq {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-amber-50 text-amber-600 border-amber-100",
+  submitted: "bg-amber-50 text-warning-700 border-amber-100",
   under_review: "bg-blue-50 text-blue-600 border-blue-100",
   needs_information: "bg-orange-50 text-orange-600 border-orange-100",
   quoted: "bg-indigo-50 text-indigo-600 border-indigo-100",
   negotiation: "bg-purple-50 text-purple-600 border-purple-100",
-  accepted: "bg-green-50 text-green-600 border-green-100",
-  rejected: "bg-red-50 text-red-600 border-red-100",
+  accepted: "bg-green-50 text-success-700 border-green-100",
+  rejected: "bg-red-50 text-danger-600 border-red-100",
   expired: "bg-neutral-50 text-neutral-600 border-neutral-100",
   converted_to_order: "bg-emerald-50 text-emerald-600 border-emerald-100",
 };
@@ -97,7 +97,7 @@ export default function AdminRfqs() {
             placeholder="Cari nomor RFQ, perusahaan, atau kontak..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100"
           />
         </div>
         <div className="relative lg:w-64">
@@ -105,7 +105,7 @@ export default function AdminRfqs() {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100"
           >
             <option value="">Semua Status</option>
             <option value="submitted">Diajukan</option>

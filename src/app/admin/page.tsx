@@ -96,7 +96,7 @@ export default function AdminDashboard() {
           title="Pesanan Tertunda"
           value={loading ? "..." : pendingOrders}
           icon="⏳"
-          color="bg-amber-50 text-amber-600 border-amber-100"
+          color="bg-amber-50 text-warning-700 border-amber-100"
         />
         <StatCard
           title="RFQ Masuk"
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
                   <span
                     className={`text-xs font-medium px-2 py-1 rounded-full ${
                       r.status === "submitted"
-                        ? "bg-amber-100 text-amber-600"
+                        ? "bg-amber-100 text-warning-700"
                         : "bg-blue-100 text-blue-600"
                     }`}
                   >

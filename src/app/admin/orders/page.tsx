@@ -15,12 +15,12 @@ interface AdminOrder {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-600 border-amber-100",
+  pending: "bg-amber-50 text-warning-700 border-amber-100",
   paid: "bg-blue-50 text-blue-600 border-blue-100",
   processing: "bg-blue-50 text-blue-600 border-blue-100",
   shipped: "bg-indigo-50 text-indigo-600 border-indigo-100",
-  delivered: "bg-green-50 text-green-600 border-green-100",
-  cancelled: "bg-red-50 text-red-600 border-red-100",
+  delivered: "bg-green-50 text-success-700 border-green-100",
+  cancelled: "bg-red-50 text-danger-600 border-red-100",
   refunded: "bg-neutral-50 text-neutral-600 border-neutral-100",
 };
 
@@ -89,7 +89,7 @@ export default function AdminOrders() {
             placeholder="Cari nomor pesanan atau nama pelanggan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100"
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Handshake } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { RfqForm } from "@/components/business/rfq-form";
 import type { CreateRfqInput } from "@/types/rfq";
@@ -42,18 +43,22 @@ export function RfqNewForm() {
   };
 
   return (
-    <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">
+        <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+          <Handshake className="h-3.5 w-3.5" aria-hidden="true" />
+          Layanan Bisnis
+        </span>
+        <h1 className="text-2xl font-bold text-heading md:text-3xl">
           Permintaan Penawaran Grosir
         </h1>
-        <p className="text-neutral-600 mt-1">
+        <p className="mt-2 text-muted">
           Sampaikan kebutuhan pengadaan Anda. Tim KWU akan meninjau permintaan
           sebelum memberikan penawaran.
         </p>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-6 md:p-8">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-soft sm:p-8">
         {!submitted ? (
           <RfqForm onSubmit={handleSubmit} loading={false} />
         ) : null}

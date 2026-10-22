@@ -53,13 +53,13 @@ interface RfqDetail {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-amber-50 text-amber-600 border-amber-100",
+  submitted: "bg-amber-50 text-warning-700 border-amber-100",
   under_review: "bg-blue-50 text-blue-600 border-blue-100",
   needs_information: "bg-orange-50 text-orange-600 border-orange-100",
   quoted: "bg-indigo-50 text-indigo-600 border-indigo-100",
   negotiation: "bg-purple-50 text-purple-600 border-purple-100",
-  accepted: "bg-green-50 text-green-600 border-green-100",
-  rejected: "bg-red-50 text-red-600 border-red-100",
+  accepted: "bg-green-50 text-success-700 border-green-100",
+  rejected: "bg-red-50 text-danger-600 border-red-100",
   expired: "bg-neutral-50 text-neutral-600 border-neutral-100",
   converted_to_order: "bg-emerald-50 text-emerald-600 border-emerald-100",
 };
@@ -327,8 +327,8 @@ export default function AdminRfqDetail({
         <div
           className={`p-4 rounded-xl mb-6 ${
             message.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-800"
-              : "bg-red-50 border border-red-200 text-red-800"
+              ? "bg-success-50 border border-success-100 text-success-800"
+              : "bg-danger-50 border border-danger-100 text-danger-800"
           }`}
         >
           {message.text}
@@ -557,7 +557,7 @@ export default function AdminRfqDetail({
           {rfq.status === "under_review" ||
           rfq.status === "quoted" ||
           rfq.status === "negotiation" ? (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
+            <div className="bg-info-50 border border-info-100 rounded-xl p-6">
               <h3 className="font-bold text-heading mb-4">Buat Quotation</h3>
               <p className="text-sm text-muted mb-4">
                 Buat penawaran harga untuk RFQ ini. Pelanggan akan menerima
@@ -652,9 +652,9 @@ export default function AdminRfqDetail({
                           q.status === "issued"
                             ? "bg-blue-50 text-blue-600"
                             : q.status === "accepted"
-                              ? "bg-green-50 text-green-600"
+                              ? "bg-green-50 text-success-700"
                               : q.status === "rejected"
-                                ? "bg-red-50 text-red-600"
+                                ? "bg-red-50 text-danger-600"
                                 : "bg-neutral-50 text-neutral-600"
                         }`}
                       >
@@ -696,7 +696,7 @@ export default function AdminRfqDetail({
             <form onSubmit={handleCreateQuotation} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-heading mb-1">
-                  Tanggal Kedaluwarsa <span className="text-red-500">*</span>
+                  Tanggal Kedaluwarsa <span className="text-danger-600">*</span>
                 </label>
                 <input
                   type="date"
@@ -889,7 +889,7 @@ const TONE_CLASSES: Record<StatusButtonTone, string> = {
   success:
     "w-full py-2.5 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors",
   danger:
-    "w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors",
+    "w-full py-2.5 rounded-lg border border-red-200 text-danger-600 hover:bg-red-50 transition-colors",
   muted:
     "w-full py-2.5 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors",
 };

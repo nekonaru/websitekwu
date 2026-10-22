@@ -180,8 +180,8 @@ export default function AdminProducts() {
         <div
           className={`p-4 rounded-xl mb-6 ${
             message.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-800"
-              : "bg-red-50 border border-red-200 text-red-800"
+              ? "bg-success-50 border border-success-100 text-success-800"
+              : "bg-danger-50 border border-danger-100 text-danger-800"
           }`}
         >
           {message.text}
@@ -197,7 +197,7 @@ export default function AdminProducts() {
             placeholder="Cari produk..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-heading focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-heading shadow-soft transition-shadow duration-200 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:border-primary focus:ring-orange-100"
             aria-label="Cari produk"
           />
         </div>
@@ -221,7 +221,7 @@ export default function AdminProducts() {
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-heading mb-1">
-                  Nama Produk <span className="text-red-500">*</span>
+                  Nama Produk <span className="text-danger-600">*</span>
                 </label>
                 <input
                   name="name"
@@ -235,7 +235,7 @@ export default function AdminProducts() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-heading mb-1">
-                  Slug <span className="text-red-500">*</span>
+                  Slug <span className="text-danger-600">*</span>
                 </label>
                 <input
                   name="slug"
@@ -430,10 +430,10 @@ export default function AdminProducts() {
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                         p.stock === 0
-                          ? "bg-red-100 text-red-600"
+                          ? "bg-red-100 text-danger-600"
                           : p.stock < 10
-                            ? "bg-amber-100 text-amber-600"
-                            : "bg-green-100 text-green-600"
+                            ? "bg-amber-100 text-warning-700"
+                            : "bg-green-100 text-success-700"
                       }`}
                     >
                       {p.stock} {p.stock === 1 ? "pcs" : "pcs"}
@@ -453,7 +453,7 @@ export default function AdminProducts() {
                       </button>
                       <button
                         onClick={() => handleDelete(p.id)}
-                        className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-neutral-600 hover:text-danger-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Hapus"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
