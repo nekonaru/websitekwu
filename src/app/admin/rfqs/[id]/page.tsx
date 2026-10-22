@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  RFQ_STATUS_LABELS,
+  type RfqStatus,
+} from "@/types/rfq";
 import { getErrorMessage } from "@/lib/format";
 import Link from "next/link";
 import {
@@ -11,7 +15,6 @@ import {
   Building2,
 } from "lucide-react";
 import { formatRupiah, formatDate } from "@/lib/format";
-import { RFQ_STATUS_LABELS } from "@/types/rfq";
 
 interface RfqItem {
   id: string;
@@ -583,7 +586,7 @@ export default function AdminRfqDetail({
                 >
                   <div>
                     <div className="text-heading">
-                      {h.new_status.replace(/_/g, " ")}
+                      {RFQ_STATUS_LABELS[h.new_status as RfqStatus] ?? h.new_status}
                     </div>
                     <div className="text-xs text-muted">
                       {formatDate(h.created_at)}
@@ -614,19 +617,19 @@ export default function AdminRfqDetail({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border bg-neutral-50">
-                  <th className="px-6 py-3 text-sm font-semibold text-muted">
+                  <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">
                     Nomor
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                  <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">
                     Versi
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                  <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-center">
+                  <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-sm font-semibold text-muted text-right">
+                  <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">
                     Aksi
                   </th>
                 </tr>
@@ -637,16 +640,16 @@ export default function AdminRfqDetail({
                     key={q.id}
                     className="border-b border-border last:border-0"
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-heading">
+                    <td className="px-3 py-4 text-sm sm:px-6 font-medium text-heading">
                       {q.quotation_number}
                     </td>
-                    <td className="px-6 py-4 text-sm text-right text-muted">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-right text-muted">
                       v{q.version}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-primary text-right">
+                    <td className="px-3 py-4 text-sm sm:px-6 font-medium text-primary text-right">
                       {formatRupiah(q.total)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-center">
                       <span
                         className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                           q.status === "issued"
@@ -661,7 +664,7 @@ export default function AdminRfqDetail({
                         {q.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-right">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-right">
                       {q.status === "issued" && (
                         <button
                           onClick={() => convertQuotation(q.id)}

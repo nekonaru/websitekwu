@@ -376,11 +376,11 @@ export default function AdminProducts() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-border bg-neutral-50">
-              <th className="px-6 py-3 text-sm font-semibold text-muted">Produk</th>
-              <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Harga</th>
-              <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Stok</th>
-              <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Kategori</th>
-              <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Aksi</th>
+              <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Produk</th>
+              <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">Harga</th>
+              <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Stok</th>
+              <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Kategori</th>
+              <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -423,10 +423,10 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-primary text-right">
+                  <td className="px-3 py-4 text-sm sm:px-6 font-medium text-primary text-right">
                     {formatRupiah(p.price || 0)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-center">
+                  <td className="px-3 py-4 text-sm sm:px-6 text-center">
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                         p.stock === 0
@@ -439,10 +439,10 @@ export default function AdminProducts() {
                       {p.stock} {p.stock === 1 ? "pcs" : "pcs"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-muted">
+                  <td className="px-3 py-4 text-sm sm:px-6 text-muted">
                     {p.category}
                   </td>
-                  <td className="px-6 py-4 text-sm text-right">
+                  <td className="px-3 py-4 text-sm sm:px-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleEdit(p)}

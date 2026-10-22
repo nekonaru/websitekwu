@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import {
+  RFQ_STATUS_LABELS,
+  type RfqStatus,
+} from "@/types/rfq";
 import { useEffect, useState } from "react";
 
 interface AdminProduct {
@@ -165,7 +169,7 @@ export default function AdminDashboard() {
                         : "bg-blue-100 text-blue-600"
                     }`}
                   >
-                    {r.status.replace(/_/g, " ")}
+                    {RFQ_STATUS_LABELS[r.status as RfqStatus] ?? r.status}
                   </span>
                 </li>
               ))}

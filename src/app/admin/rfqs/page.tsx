@@ -127,13 +127,13 @@ export default function AdminRfqs() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-neutral-50">
-                <th className="px-6 py-3 text-sm font-semibold text-muted">Nomor RFQ</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted">Perusahaan</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted">Kontak</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Pengajuan</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal Kebutuhan</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Status</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Aksi</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Nomor RFQ</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Perusahaan</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Kontak</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Tanggal Pengajuan</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Tanggal Kebutuhan</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Status</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -152,18 +152,18 @@ export default function AdminRfqs() {
               ) : (
                 rfqs.map((r) => (
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-neutral-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-heading">
+                    <td className="px-3 py-4 text-sm sm:px-6 font-medium text-heading">
                       {r.rfq_number}
                     </td>
-                    <td className="px-6 py-4 text-sm text-heading">{r.organization_name}</td>
-                    <td className="px-6 py-4 text-sm text-muted">{r.contact_name}</td>
-                    <td className="px-6 py-4 text-sm text-muted text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-heading">{r.organization_name}</td>
+                    <td className="px-3 py-4 text-sm sm:px-6 text-muted">{r.contact_name}</td>
+                    <td className="px-3 py-4 text-sm sm:px-6 text-muted text-center">
                       {formatDate(r.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-muted text-center">
                       {formatDate(r.required_date)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-center">
                       <span
                         className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                           STATUS_COLORS[r.status] || "border-neutral-200 text-neutral-600"
@@ -172,7 +172,7 @@ export default function AdminRfqs() {
                         {RFQ_STATUS_LABELS[r.status as keyof typeof RFQ_STATUS_LABELS] || r.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-right">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-right">
                       <Link
                         href={`/admin/rfqs/${r.id}`}
                         className="text-primary hover:underline text-sm"

@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from "@/types/rfq";
 import { Search } from "lucide-react";
 import { formatRupiah, formatDate, getErrorMessage } from "@/lib/format";
 
@@ -100,12 +104,12 @@ export default function AdminOrders() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-neutral-50">
-                <th className="px-6 py-3 text-sm font-semibold text-muted">Nomor Pesanan</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted">Pelanggan</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Total</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Tanggal</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-center">Status</th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted text-right">Aksi</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Nomor Pesanan</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted">Pelanggan</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">Total</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Tanggal</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-center">Status</th>
+                <th className="px-3 py-3 text-sm sm:px-6 font-semibold text-muted text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -124,28 +128,28 @@ export default function AdminOrders() {
               ) : (
                 filtered.map((o) => (
                   <tr key={o.id} className="border-b border-border last:border-0 hover:bg-neutral-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-heading">
+                    <td className="px-3 py-4 text-sm sm:px-6 font-medium text-heading">
                       {o.order_number}
                     </td>
-                    <td className="px-6 py-4 text-sm text-heading">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-heading">
                       {o.customer_name}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-primary text-right">
+                    <td className="px-3 py-4 text-sm sm:px-6 font-medium text-primary text-right">
                       {formatRupiah(o.total)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-muted text-center">
                       {formatDate(o.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-center">
                       <span
                         className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                           STATUS_COLORS[o.status] || "border-neutral-200 text-neutral-600"
                         }`}
                       >
-                        {o.status.replace(/_/g, " ")}
+                        {ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-right">
+                    <td className="px-3 py-4 text-sm sm:px-6 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <select
                           value={o.status}
