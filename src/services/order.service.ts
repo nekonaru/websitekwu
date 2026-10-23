@@ -83,8 +83,10 @@ interface OrderItemRow {
 /** Periksa apakah pengguna yang login berperan sebagai admin. */
 function isAdminUser(user: unknown): boolean {
   if (!user || typeof user !== "object") return false;
-  const metadata = (user as { user_metadata?: { role?: string } | null })
-    .user_metadata;
+  const metadata = (user as { app_metadata?: { role?: string } | null })
+      .app_metadata ??
+    (user as { user_metadata?: { role?: string } | null })
+      .user_metadata;
   return metadata?.role === "admin";
 }
 

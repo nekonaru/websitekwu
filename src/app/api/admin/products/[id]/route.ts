@@ -4,12 +4,14 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
-import { createServiceSupabaseClient } from "@/lib/supabase";
+import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/auth";
 import {
   updateProductAdmin,
   deleteProductAdmin,
 } from "@/services/product.service";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 const productSchema = z.object({
   name: z.string().min(2).max(200),
@@ -30,6 +32,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceSupabaseClient();
 
     const { data, error } = await supabase
@@ -78,6 +89,15 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const parsed = productSchema.partial().safeParse(body);
     if (!parsed.success) {
@@ -116,6 +136,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     await deleteProductAdmin(id);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

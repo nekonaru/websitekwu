@@ -4,12 +4,24 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
-import { createServiceSupabaseClient } from "@/lib/supabase";
+import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/auth";
 import { createProductAdmin, toProduct, type ProductRow } from "@/services/product.service";
 import { z } from "zod";
+import { cookies } from "next/headers";
 
 export async function GET() {
   try {
+    const admin = await requireAdmin(
+      toSupabaseCookieStore(await cookies())
+    );
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceSupabaseClient();
 
     const { data, error } = await supabase
@@ -50,6 +62,16 @@ const productSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const admin = await requireAdmin(
+      toSupabaseCookieStore(await cookies())
+    );
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const parsed = productSchema.safeParse(body);
     if (!parsed.success) {

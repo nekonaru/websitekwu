@@ -6,7 +6,9 @@ import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
 import { z } from "zod";
 import { updateOrderStatusAdmin } from "@/services/order.service";
-
+import { requireAdmin } from "@/lib/auth";
+import { toSupabaseCookieStore } from "@/lib/supabase";
+import { cookies } from "next/headers";
 const statusSchema = z.object({
   status: z.string().min(2).max(50),
   note: z.string().max(500).optional(),
@@ -18,6 +20,14 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
 
     const body = await req.json();
     const parsed = statusSchema.safeParse(body);

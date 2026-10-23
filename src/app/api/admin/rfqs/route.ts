@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
+import { requireAdmin } from "@/lib/auth";
+import { toSupabaseCookieStore } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";
 
@@ -21,6 +23,16 @@ const querySchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    const admin = await requireAdmin(
+      toSupabaseCookieStore(await cookies())
+    );
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const parsed = querySchema.safeParse({
       status: searchParams.get("status") || undefined,
