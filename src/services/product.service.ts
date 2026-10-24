@@ -10,6 +10,12 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import {
+  bacaBasisData,
+  tulisBasisData,
+  buatId,
+  type ProdukBerkas,
+} from "@/lib/file-db";
 import { CATEGORIES, PRODUCTS } from "@/lib/data";
 
 export interface Product {
@@ -26,6 +32,25 @@ export interface Product {
   isDraft?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Ubah baris berkas menjadi objek produk yang dipakai aplikasi. */
+function toProductBerkas(row: ProdukBerkas): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    shortDescription: row.short_description,
+    price: row.price,
+    stock: row.stock,
+    category: row.category,
+    image: row.image_url,
+    isFeatured: row.is_featured,
+    isDraft: row.is_draft,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export interface Category {
@@ -126,7 +151,13 @@ export async function getCategories({
   cookies?: () => SupabaseCookieStore;
 } = {}): Promise<Category[]> {
   if (!isSupabaseConfigured()) {
-    return MOCK_CATEGORIES;
+    const db = await bacaBasisData();
+    return db.categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      createdAt: c.created_at,
+    }));
   }
 
   const supabase = cookies
@@ -162,7 +193,13 @@ export async function getPublishedProducts({
   cookies?: () => SupabaseCookieStore;
 } = {}): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
-    return { data: MOCK_PRODUCTS, source: "contoh" };
+    const db = await bacaBasisData();
+    return {
+      data: db.products
+        .filter((p) => !p.is_draft)
+        .map((p) => toProductBerkas(p)),
+      source: "database",
+    };
   }
 
   const supabase = cookies
@@ -208,10 +245,12 @@ export async function getProductBySlug({
   cookies?: () => SupabaseCookieStore;
 }): Promise<DataResult<Product | null>> {
   if (!isSupabaseConfigured()) {
-    const found = MOCK_PRODUCTS.find(
-      (p) => p.slug === slug && !p.isDraft
-    );
-    return { data: found ?? null, source: "contoh" };
+    const db = await bacaBasisData();
+    const found = db.products.find((p) => p.slug === slug && !p.is_draft);
+    return {
+      data: found ? toProductBerkas(found) : null,
+      source: "database",
+    };
   }
 
   const supabase = cookies
@@ -251,15 +290,18 @@ export async function searchProducts({
 }): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
     const q = query.toLowerCase();
+    const db = await bacaBasisData();
     return {
-      data: MOCK_PRODUCTS.filter(
-        (p) =>
-          !p.isDraft &&
-          (p.name.toLowerCase().includes(q) ||
-            p.description.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q))
-      ),
-      source: "contoh",
+      data: db.products
+        .filter(
+          (p) =>
+            !p.is_draft &&
+            (p.name.toLowerCase().includes(q) ||
+              p.description.toLowerCase().includes(q) ||
+              p.category.toLowerCase().includes(q))
+        )
+        .map((p) => toProductBerkas(p)),
+      source: "database",
     };
   }
 
@@ -296,11 +338,12 @@ export async function getProductsByCategory({
   cookies?: () => SupabaseCookieStore;
 }): Promise<DataResult<Product[]>> {
   if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
     return {
-      data: MOCK_PRODUCTS.filter(
-        (p) => p.category === categorySlug && !p.isDraft
-      ),
-      source: "contoh",
+      data: db.products
+        .filter((p) => p.category === categorySlug && !p.is_draft)
+        .map((p) => toProductBerkas(p)),
+      source: "database",
     };
   }
 
@@ -330,7 +373,7 @@ export async function getProductsByCategory({
 /* Admin: manajemen produk (hanya server, butuh service-role)        */
 /* ------------------------------------------------------------------ */
 
-/** Buat produk baru (admin). Butuh service-role key. */
+/** Buat produk baru (admin). Saat Supabase belum dikonfigurasi, simpan ke berkas. */
 export async function createProductAdmin(input: {
   name: string;
   slug: string;
@@ -342,6 +385,29 @@ export async function createProductAdmin(input: {
   imageUrl: string;
   isFeatured?: boolean;
 }) {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const sekarang = new Date().toISOString();
+    const produk: ProdukBerkas = {
+      id: buatId(),
+      name: input.name,
+      slug: input.slug,
+      description: input.description,
+      short_description: input.shortDescription,
+      price: input.price,
+      stock: input.stock,
+      category: input.category,
+      image_url: input.imageUrl,
+      is_featured: input.isFeatured ?? false,
+      is_draft: false,
+      created_at: sekarang,
+      updated_at: sekarang,
+    };
+    db.products.unshift(produk);
+    await tulisBasisData(db);
+    return produk;
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -381,6 +447,32 @@ export async function updateProductAdmin(
     isDraft: boolean;
   }>
 ) {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const indeks = db.products.findIndex((p) => p.id === id);
+    if (indeks < 0) throw new Error("Produk tidak ditemukan");
+
+    const produk = db.products[indeks];
+    if (input.name !== undefined) produk.name = input.name;
+    if (input.slug !== undefined) produk.slug = input.slug;
+    if (input.description !== undefined)
+      produk.description = input.description;
+    if (input.shortDescription !== undefined)
+      produk.short_description = input.shortDescription;
+    if (input.price !== undefined) produk.price = input.price;
+    if (input.stock !== undefined) produk.stock = input.stock;
+    if (input.category !== undefined) produk.category = input.category;
+    if (input.imageUrl !== undefined) produk.image_url = input.imageUrl;
+    if (input.isFeatured !== undefined)
+      produk.is_featured = input.isFeatured;
+    if (input.isDraft !== undefined) produk.is_draft = input.isDraft;
+    produk.updated_at = new Date().toISOString();
+
+    db.products[indeks] = produk;
+    await tulisBasisData(db);
+    return produk;
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const updateData: Record<string, unknown> = {};
@@ -407,8 +499,17 @@ export async function updateProductAdmin(
   return data;
 }
 
-/** Hapus produk (admin). Butuh service-role key. */
+/** Hapus produk (admin). Saat Supabase belum dikonfigurasi, hapus dari berkas. */
 export async function deleteProductAdmin(id: string) {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const awal = db.products.length;
+    db.products = db.products.filter((p) => p.id !== id);
+    if (db.products.length === awal) throw new Error("Produk tidak ditemukan");
+    await tulisBasisData(db);
+    return;
+  }
+
   const supabase = createServiceSupabaseClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) throw error;
