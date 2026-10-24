@@ -3,6 +3,7 @@
  * Detail produk untuk admin.
  */
 import { NextResponse } from "next/server";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
 import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/auth";
@@ -30,6 +31,9 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { id } = await params;
 
@@ -87,6 +91,9 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { id } = await params;
 
@@ -134,6 +141,9 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { id } = await params;
 

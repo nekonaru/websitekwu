@@ -3,6 +3,7 @@
  * Daftar semua produk untuk admin (termasuk draft).
  */
 import { NextResponse } from "next/server";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
 import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/auth";
@@ -10,7 +11,10 @@ import { createProductAdmin, toProduct, type ProductRow } from "@/services/produ
 import { z } from "zod";
 import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const admin = await requireAdmin(
       toSupabaseCookieStore(await cookies())

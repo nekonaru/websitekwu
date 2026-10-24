@@ -3,6 +3,7 @@
  * Perbarui status pesanan oleh admin.
  */
 import { NextResponse } from "next/server";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
 import { z } from "zod";
 import { updateOrderStatusAdmin } from "@/services/order.service";
@@ -18,6 +19,9 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { id } = await params;
 

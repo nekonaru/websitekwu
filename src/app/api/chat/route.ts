@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY = 10;
@@ -148,6 +149,10 @@ async function callOpenAi(
 }
 
 export async function POST(req: Request) {
+  // Batasi 20 pesan per menit per IP untuk melindungi biaya provider AI.
+  const diblokir = tanggapiJikaMelebihi(req, 20, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const body = await req.json();
     const { message, history } = body;

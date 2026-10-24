@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { KwuChatbot } from "@/components/chat/kwu-chatbot";
+import { BackToTop } from "@/components/ui/back-to-top";
 import { CartProvider } from "@/contexts/cart-context";
 
 const geistSans = Geist({
@@ -91,6 +92,7 @@ export default function RootLayout({
             {children}
           </main>
           <KwuChatbot />
+          <BackToTop />
           <Footer />
         </CartProvider>
       </body>

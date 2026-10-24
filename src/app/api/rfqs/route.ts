@@ -7,10 +7,15 @@ import {
   createServerSupabaseClient,
   toSupabaseCookieStore,
 } from "@/lib/supabase";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { createRfqSchema } from "@/lib/validation/rfq";
 import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
+  // Batasi 5 pengajuan RFQ per 5 menit per IP untuk mencegah spam.
+  const diblokir = tanggapiJikaMelebihi(req, 5, 5 * 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const body = await req.json();

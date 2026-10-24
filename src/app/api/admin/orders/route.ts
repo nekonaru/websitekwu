@@ -3,12 +3,16 @@
  * Daftar semua pesanan untuk admin.
  */
 import { NextResponse } from "next/server";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
 import { getAllOrdersAdmin } from "@/services/order.service";
 import { requireAdmin } from "@/lib/auth";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 import { cookies } from "next/headers";
-export async function GET() {
+export async function GET(req: Request) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
     if (!admin) {

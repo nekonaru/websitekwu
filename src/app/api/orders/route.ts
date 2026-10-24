@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabase";
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 
 const orderItemSchema = z.object({
   productId: z.string().optional(),
@@ -29,6 +30,10 @@ const orderSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Batasi 10 pesanan per menit per IP untuk mencegah penyalahgunaan.
+  const diblokir = tanggapiJikaMelebihi(req, 10, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const body = await req.json();

@@ -3,6 +3,7 @@
  * Daftar RFQ untuk admin dengan filter dan pagination.
  */
 import { NextResponse } from "next/server";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
@@ -22,6 +23,9 @@ const querySchema = z.object({
 });
 
 export async function GET(req: Request) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const admin = await requireAdmin(
       toSupabaseCookieStore(await cookies())
