@@ -5,7 +5,7 @@
  * app_metadata hanya dapat diubah lewat service-role key, sehingga
  * pengguna tidak bisa menaikkan perannya sendiri.
  */
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export interface AdminUser {
@@ -20,6 +20,11 @@ export interface AdminUser {
 export async function requireAdmin(
   cookies: SupabaseCookieStore | Promise<SupabaseCookieStore>
 ): Promise<AdminUser | null> {
+  // Mode berkas lokal: tidak ada autentikasi, anggap sebagai admin.
+  if (!isSupabaseConfigured()) {
+    return { id: "admin-lokal", email: "admin@kwu.local" };
+  }
+
   const supabase = await createServerSupabaseClient(cookies);
 
   const {
@@ -44,6 +49,11 @@ export async function requireAdmin(
 export async function requireUser(
   cookies: SupabaseCookieStore | Promise<SupabaseCookieStore>
 ): Promise<AdminUser | null> {
+  // Mode berkas lokal: tidak ada autentikasi, anggap sebagai pengguna lokal.
+  if (!isSupabaseConfigured()) {
+    return { id: "pengguna-lokal", email: "pengguna@kwu.local" };
+  }
+
   const supabase = await createServerSupabaseClient(cookies);
 
   const {

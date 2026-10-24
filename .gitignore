@@ -42,3 +42,6 @@ next-env.d.ts
 
 # laporan lint lokal
 lint-*.txt
+
+# basis data berkas lokal (dibuat ulang dari data awal di src/lib/file-db.ts)
+/data/kwu.json
