@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { KwuChatbot } from "@/components/chat/kwu-chatbot";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { CartProvider } from "@/contexts/cart-context";
+import { FavoritProvider } from "@/contexts/favorit-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,13 +88,15 @@ export default function RootLayout({
           Lewati ke konten utama
         </a>
         <CartProvider>
-          <Header />
-          <main id="konten-utama" className="flex-1 focus:outline-none">
-            {children}
-          </main>
-          <KwuChatbot />
-          <BackToTop />
-          <Footer />
+          <FavoritProvider>
+            <Header />
+            <main id="konten-utama" className="flex-1 focus:outline-none">
+              {children}
+            </main>
+            <KwuChatbot />
+            <BackToTop />
+            <Footer />
+          </FavoritProvider>
         </CartProvider>
       </body>
     </html>

@@ -12,8 +12,10 @@ import {
   LogIn,
   LayoutGrid,
   Handshake,
+  Heart,
 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
+import { useFavorit } from "@/contexts/favorit-context";
 
 const NAVIGASI = [
   { href: "/", label: "Beranda", icon: LayoutGrid },
@@ -23,6 +25,7 @@ const NAVIGASI = [
 
 export function Header() {
   const { itemCount } = useCart();
+  const { count: favoritCount } = useFavorit();
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -140,6 +143,19 @@ export function Header() {
           </Link>
 
           <Link
+            href="/favorit"
+            className="group relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-body transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
+            aria-label={`Produk favorit, ${favoritCount} item`}
+          >
+            <Heart className="h-5 w-5" aria-hidden="true" />
+            {favoritCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-600 px-1 text-[10px] font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-110">
+                {favoritCount > 99 ? "99+" : favoritCount}
+              </span>
+            )}
+          </Link>
+
+          <Link
             href="/keranjang"
             className="group relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-body transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
             aria-label={`Keranjang belanja, ${itemCount} item`}
@@ -218,6 +234,19 @@ export function Header() {
               >
                 <LogIn className="h-5 w-5" aria-hidden="true" />
                 Masuk ke Akun
+              </Link>
+              <Link
+                href="/favorit"
+                onClick={closeLayers}
+                className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium text-heading transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
+              >
+                <Heart className="h-5 w-5" aria-hidden="true" />
+                Favorit
+                {favoritCount > 0 && (
+                  <span className="ml-auto rounded-full bg-danger-600 px-2 py-0.5 text-xs font-bold text-white">
+                    {favoritCount}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/keranjang"

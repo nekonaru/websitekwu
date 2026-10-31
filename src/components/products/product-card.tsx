@@ -3,9 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Check, Plus, Flame } from "lucide-react";
+import { Check, Plus, Flame, Heart } from "lucide-react";
 import { formatRupiah } from "@/lib/format";
 import { useCart } from "@/contexts/cart-context";
+import { useFavorit } from "@/contexts/favorit-context";
 
 export interface ProductCardProps {
   product: {
@@ -22,9 +23,11 @@ export interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCart();
+  const { isFavorite, toggle } = useFavorit();
   const [justAdded, setJustAdded] = useState(false);
   const inStock = product.stock > 0;
   const menipis = inStock && product.stock <= 10;
+  const favorit = isFavorite(product.id);
 
   function handleAdd() {
     if (!inStock) return;
@@ -76,6 +79,30 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </span>
         )}
       </Link>
+
+      {/* Tombol favorit, di atas tautan gambar agar tetap bisa diklik */}
+      <button
+        type="button"
+        onClick={() => toggle(product)}
+        aria-pressed={favorit}
+        aria-label={
+          favorit
+            ? `Hapus ${product.name} dari favorit`
+            : `Tambahkan ${product.name} ke favorit`
+        }
+        className={`absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full shadow-md backdrop-blur transition-all duration-300 active:scale-90 ${
+          favorit
+            ? "bg-danger-600 text-white"
+            : "bg-white/90 text-neutral-500 hover:bg-white hover:text-danger-600"
+        }`}
+      >
+        <Heart
+          className={`h-4.5 w-4.5 transition-all duration-300 ${
+            favorit ? "scale-110 fill-current" : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
 
       <div className="flex flex-1 flex-col p-4 lg:p-5">
         <h3 className="mb-1.5 line-clamp-2 text-sm font-bold leading-snug text-heading transition-colors duration-200 group-hover:text-primary lg:text-base">
