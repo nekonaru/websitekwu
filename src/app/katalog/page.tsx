@@ -440,8 +440,14 @@ function KatalogIsi() {
                 </div>
               ))
             ) : produkHalaman.length > 0 ? (
-              produkHalaman.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              produkHalaman.map((product, index) => (
+                <div
+                  key={product.id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+                >
+                  <ProductCard product={product} />
+                </div>
               ))
             ) : (
               <div className="col-span-full rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">

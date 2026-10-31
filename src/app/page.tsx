@@ -223,8 +223,12 @@ export default function Home() {
           </p>
 
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-            {KATEGORI.map((kategori) => (
-              <li key={kategori.slug}>
+            {KATEGORI.map((kategori, index) => (
+              <li
+                key={kategori.slug}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 55}ms` }}
+              >
                 <Link
                   href={`/katalog?category=${kategori.slug}`}
                   className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-primary-soft hover:shadow-card-hover sm:p-6"
@@ -332,7 +336,8 @@ export default function Home() {
             {ALUR_RFQ.map((langkah, index) => (
               <li
                 key={langkah.judul}
-                className="relative rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-card md:p-7"
+                className="relative rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-card md:p-7 animate-fade-in-up"
+                style={{ animationDelay: `${index * 110}ms` }}
               >
                 <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary transition-colors duration-300 group-hover:bg-primary">
                   <langkah.icon className="h-6 w-6" aria-hidden="true" />
