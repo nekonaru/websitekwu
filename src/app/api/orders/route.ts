@@ -6,11 +6,13 @@
 import { NextResponse } from "next/server";
 import {
   createServerSupabaseClient,
+  isSupabaseConfigured,
   toSupabaseCookieStore,
 } from "@/lib/supabase";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
+import { createOrder } from "@/services/order.service";
 
 const orderItemSchema = z.object({
   productId: z.string().optional(),
@@ -35,7 +37,6 @@ export async function POST(req: Request) {
   if (diblokir) return diblokir;
 
   try {
-    const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const body = await req.json();
 
     const parsed = orderSchema.safeParse(body);
@@ -46,14 +47,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const {
-      customerName,
-      customerEmail,
-      customerPhone,
-      deliveryAddress,
-      notes,
-      items,
-    } = parsed.data;
+    const cookieStore = toSupabaseCookieStore(await cookies());
+
+    // Mode berkas lokal: tidak ada sesi login, langsung simpan sebagai
+    // pengguna lokal lewat service.
+    if (!isSupabaseConfigured()) {
+      const hasil = await createOrder({
+      input: parsed.data,
+      cookies: () => cookieStore,
+    });
+      return NextResponse.json({ success: true, data: hasil }, { status: 201 });
+    }
+
+    const supabase = await createServerSupabaseClient(cookieStore);
 
     // Ambil user saat ini dari sesi (anon key + cookie)
     const {
@@ -68,60 +74,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const subtotal = items.reduce(
-      (sum, i) => sum + i.unitPrice * i.quantity,
-      0
-    );
-    const shippingCost = 0; // gratis dalam contoh
-    const tax = 0;
-    const total = subtotal + shippingCost + tax;
+    // Service membuat pesanan memakai nomor berurutan dari database,
+    // sehingga aman terhadap request bersamaan (tanpa Math.random).
+    const hasil = await createOrder({
+      input: parsed.data,
+      cookies: () => cookieStore,
+    });
 
-    const orderNumber = `KWU-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
-
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        user_id: user.id,
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone ?? null,
-        delivery_address: deliveryAddress,
-        subtotal,
-        shipping_cost: shippingCost,
-        tax,
-        total,
-        status: "pending",
-        notes: notes ?? null,
-      })
-      .select()
-      .single();
-
-    if (orderError) throw orderError;
-
-    const { error: itemsError } = await supabase.from("order_items").insert(
-      items.map((item) => ({
-        order_id: order.id,
-        product_id: item.productId ?? null,
-        product_name: item.productName,
-        product_sku: item.productSku ?? null,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        total_price: item.unitPrice * item.quantity,
-      }))
-    );
-
-    if (itemsError) throw itemsError;
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: { orderNumber: order.order_number, status: "pending" },
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: hasil }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gagal membuat pesanan";
+    if (message === "Autentikasi diperlukan") {
+      return NextResponse.json({ success: false, error: message }, { status: 401 });
+    }
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }

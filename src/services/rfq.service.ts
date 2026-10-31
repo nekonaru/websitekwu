@@ -5,9 +5,16 @@
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
+  isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getQuotationsByRfq as getQuotationsByRfqFromQuotation } from "@/services/quotation.service";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import {
+  bacaBasisData,
+  tulisBasisData,
+  buatId,
+  type RfqBerkas,
+} from "@/lib/file-db";
 
 export { getQuotationsByRfqFromQuotation as getQuotationsByRfq };
 
@@ -105,6 +112,11 @@ function isAdminUser(user: unknown): boolean {
   return metadata?.role === "admin";
 }
 
+/** Ubah baris berkas menjadi objek RFQ yang dipakai aplikasi. */
+function rfqBerkasKeRfq(r: RfqBerkas): RfqWithItems {
+  return { ...r, items: r.items ?? [], history: r.history ?? [] };
+}
+
 /* ------------------------------------------------------------------ */
 /* Ambil daftar RFQ (admin)                                           */
 /* ------------------------------------------------------------------ */
@@ -123,6 +135,27 @@ export async function getAllRfqsAdmin({
   page?: number;
   pageSize?: number;
 }): Promise<{ rfqs: Rfq[]; total: number }> {
+  // Mode berkas lokal: ambil dari data/kwu.json dengan filter serupa.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    let daftar = [...db.rfqs];
+    if (status) daftar = daftar.filter((r) => r.status === status);
+    if (search) {
+      const kata = search.toLowerCase();
+      daftar = daftar.filter(
+        (r) =>
+          r.rfq_number.toLowerCase().includes(kata) ||
+          r.organization_name.toLowerCase().includes(kata) ||
+          r.contact_name.toLowerCase().includes(kata) ||
+          r.business_email.toLowerCase().includes(kata)
+      );
+    }
+    daftar.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    const total = daftar.length;
+    const potong = daftar.slice((page - 1) * pageSize, page * pageSize);
+    return { rfqs: potong.map(rfqBerkasKeRfq), total };
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   // Cek otorisasi admin
@@ -195,6 +228,13 @@ export async function getRfqById({
   id: string;
   cookies: () => SupabaseCookieStore;
 }): Promise<RfqWithItems | null> {
+  // Mode berkas lokal: admin lokal boleh melihat semua RFQ.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const ditemukan = db.rfqs.find((r) => r.id === id);
+    return ditemukan ? rfqBerkasKeRfq(ditemukan) : null;
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   const {
@@ -287,6 +327,41 @@ export async function updateRfqStatusAdmin({
   note?: string;
   cookies: () => SupabaseCookieStore;
 }): Promise<{ oldStatus: string; newStatus: string }> {
+  // Mode berkas lokal: terapkan aturan transisi yang sama ke berkas.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const indeks = db.rfqs.findIndex((r) => r.id === rfqId);
+    if (indeks < 0) throw new Error("RFQ tidak ditemukan");
+
+    const lama = db.rfqs[indeks].status;
+    const diizinkan = ALLOWED_TRANSITIONS[lama] ?? [];
+    if (!diizinkan.includes(newStatus)) {
+      throw new Error(
+        `Transisi status dari ${lama} ke ${newStatus} tidak diizinkan`
+      );
+    }
+    if (newStatus === "rejected" && !note) {
+      throw new Error("Status ditolak harus disertai alasan");
+    }
+
+    const sekarang = new Date().toISOString();
+    const rfq = db.rfqs[indeks];
+    rfq.status = newStatus;
+    rfq.updated_at = sekarang;
+    if (note) rfq.admin_notes = note;
+    rfq.history.push({
+      id: buatId(),
+      rfq_id: rfqId,
+      old_status: lama,
+      new_status: newStatus,
+      changed_by: "admin-lokal",
+      note: note ?? null,
+      created_at: sekarang,
+    });
+    await tulisBasisData(db);
+    return { oldStatus: lama, newStatus };
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
   const serviceClient = createServiceSupabaseClient();
 
@@ -370,6 +445,17 @@ export async function addAdminNote({
   note: string;
   cookies: () => SupabaseCookieStore;
 }): Promise<void> {
+  // Mode berkas lokal: simpan catatan ke berkas.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const indeks = db.rfqs.findIndex((r) => r.id === rfqId);
+    if (indeks < 0) throw new Error("RFQ tidak ditemukan");
+    db.rfqs[indeks].admin_notes = note;
+    db.rfqs[indeks].updated_at = new Date().toISOString();
+    await tulisBasisData(db);
+    return;
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   // Cek otorisasi admin

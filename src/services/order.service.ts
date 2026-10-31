@@ -5,9 +5,17 @@
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
+  isSupabaseConfigured,
 } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import {
+  bacaBasisData,
+  tulisBasisData,
+  buatId,
+  buatNomorPesanan,
+  type PesananBerkas,
+} from "@/lib/file-db";
 
 export interface Order {
   id: string;
@@ -124,6 +132,11 @@ function toOrderWithItems(row: OrderRow): OrderWithItems {
   };
 }
 
+/** Ubah baris berkas menjadi objek pesanan yang dipakai aplikasi. */
+function pesananBerkasKeOrder(p: PesananBerkas): OrderWithItems {
+  return { ...p, items: p.items ?? [] };
+}
+
 /* ------------------------------------------------------------------ */
 /* Validasi                                                           */
 /* ------------------------------------------------------------------ */
@@ -162,8 +175,6 @@ export async function createOrder({
   input: CreateOrderInput;
   cookies: () => SupabaseCookieStore;
 }): Promise<{ orderNumber: string; status: string }> {
-  const supabase = await createServerSupabaseClient(cookies());
-
   // Validasi input
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
@@ -179,7 +190,60 @@ export async function createOrder({
     items,
   } = parsed.data;
 
-  // Ambil user dari sesi
+  const subtotal = items.reduce(
+    (sum, i) => sum + i.unitPrice * i.quantity,
+    0
+  );
+  const shippingCost = 0;
+  const tax = 0;
+  const total = subtotal + shippingCost + tax;
+
+  // Mode berkas lokal: simpan pesanan ke data/kwu.json.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const sekarang = new Date().toISOString();
+    const tahun = new Date().getFullYear();
+    const nomor =
+      db.orders.filter((o) => o.order_number.includes(`-${tahun}-`)).length + 1;
+
+    const pesanan: PesananBerkas = {
+      id: buatId(),
+      order_number: buatNomorPesanan(tahun, nomor),
+      user_id: "pengguna-lokal",
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone ?? null,
+      delivery_address: deliveryAddress,
+      subtotal,
+      shipping_cost: shippingCost,
+      tax,
+      total,
+      status: "pending",
+      payment_method: null,
+      payment_proof_url: null,
+      notes: notes ?? null,
+      created_at: sekarang,
+      updated_at: sekarang,
+      items: items.map((item) => ({
+        id: buatId(),
+        order_id: "",
+        product_id: item.productId ?? null,
+        product_name: item.productName,
+        product_sku: item.productSku ?? null,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: item.unitPrice * item.quantity,
+        created_at: sekarang,
+      })),
+    };
+    pesanan.items.forEach((i) => (i.order_id = pesanan.id));
+    db.orders.unshift(pesanan);
+    await tulisBasisData(db);
+    return { orderNumber: pesanan.order_number, status: pesanan.status };
+  }
+
+  // Ambil user dari sesi (client dengan cookie sesi).
+  const supabase = await createServerSupabaseClient(cookies());
   const {
     data: { user },
     error: authError,
@@ -188,14 +252,6 @@ export async function createOrder({
   if (authError || !user) {
     throw new Error("Autentikasi diperlukan");
   }
-
-  const subtotal = items.reduce(
-    (sum, i) => sum + i.unitPrice * i.quantity,
-    0
-  );
-  const shippingCost = 0;
-  const tax = 0;
-  const total = subtotal + shippingCost + tax;
 
   // Buat order dalam transaksi (menggunakan service-role untuk transaksi atomic)
   const serviceClient = createServiceSupabaseClient();
@@ -256,6 +312,12 @@ export async function getMyOrders({
 }: {
   cookies: () => SupabaseCookieStore;
 }): Promise<OrderWithItems[]> {
+  // Mode berkas lokal: satu pengguna lokal, kembalikan semua pesanan.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    return db.orders.map(pesananBerkasKeOrder);
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   const {
@@ -284,6 +346,11 @@ export async function getMyOrders({
 
 /** Ambil semua pesanan (admin only). Butuh service-role. */
 export async function getAllOrdersAdmin(): Promise<OrderWithItems[]> {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    return db.orders.map(pesananBerkasKeOrder);
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -306,6 +373,19 @@ export async function updateOrderStatusAdmin({
   status: string;
   note?: string;
 }) {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const indeks = db.orders.findIndex((o) => o.id === orderId);
+    if (indeks < 0) throw new Error("Pesanan tidak ditemukan");
+    db.orders[indeks] = {
+      ...db.orders[indeks],
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    await tulisBasisData(db);
+    return db.orders[indeks];
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -334,6 +414,12 @@ export async function getOrderById({
   id: string;
   cookies: () => SupabaseCookieStore;
 }): Promise<OrderWithItems | null> {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const ditemukan = db.orders.find((o) => o.id === id);
+    return ditemukan ? pesananBerkasKeOrder(ditemukan) : null;
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   const {

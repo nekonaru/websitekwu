@@ -5,9 +5,19 @@
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
+  isSupabaseConfigured,
 } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import {
+  bacaBasisData,
+  tulisBasisData,
+  buatId,
+  buatNomorQuotation,
+  buatNomorPesanan,
+  type QuotationBerkas,
+  type PesananBerkas,
+} from "@/lib/file-db";
 
 export interface Quotation {
   id: string;
@@ -115,6 +125,11 @@ function toQuotationWithItems(row: QuotationRow): QuotationWithItems {
   };
 }
 
+/** Ubah baris berkas menjadi objek quotation yang dipakai aplikasi. */
+function quotationBerkasKeQuotation(x: QuotationBerkas): QuotationWithItems {
+  return { ...x, items: x.items ?? [] };
+}
+
 /* ------------------------------------------------------------------ */
 /* Validasi                                                           */
 /* ------------------------------------------------------------------ */
@@ -162,6 +177,90 @@ export async function createQuotation({
   version: number;
   status: string;
 }> {
+  // Mode berkas lokal: simpan quotation ke data/kwu.json (tanpa sesi login).
+  if (!isSupabaseConfigured()) {
+    const parsedFile = createQuotationSchema.safeParse(input);
+    if (!parsedFile.success) {
+      throw new Error("Input quotation tidak valid");
+    }
+    const { rfqId, validUntil, shippingCost, discount, terms, items } =
+      parsedFile.data;
+
+    const db = await bacaBasisData();
+    const rfq = db.rfqs.find((r) => r.id === rfqId);
+    if (!rfq) throw new Error("RFQ tidak ditemukan");
+
+    const diizinkan = ["under_review", "quoted", "negotiation"];
+    if (!diizinkan.includes(rfq.status)) {
+      throw new Error(
+        `RFQ tidak dapat dibuat quotation dalam status ${rfq.status}`
+      );
+    }
+
+    const sekarang = new Date().toISOString();
+    const tahun = new Date().getFullYear();
+    const nomor =
+      db.quotations.filter((x) => x.quotation_number.includes(`-${tahun}-`))
+        .length + 1;
+    const versi =
+      db.quotations.filter((x) => x.rfq_id === rfqId).reduce(
+        (m, x) => Math.max(m, x.version),
+        0
+      ) + 1;
+
+    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const total = subtotal + shippingCost - discount;
+
+    const quotation: QuotationBerkas = {
+      id: buatId(),
+      rfq_id: rfqId,
+      quotation_number: buatNomorQuotation(tahun, nomor),
+      version: versi,
+      created_by: "admin-lokal",
+      valid_until: validUntil,
+      status: "issued",
+      subtotal,
+      shipping_cost: shippingCost,
+      discount,
+      total,
+      terms: terms ?? null,
+      created_at: sekarang,
+      updated_at: sekarang,
+      items: items.map((i) => ({
+        id: buatId(),
+        quotation_id: "",
+        rfq_item_id: i.rfqItemId ?? null,
+        product_name: i.productName,
+        quantity: i.quantity,
+        unit: i.unit,
+        unit_price: i.unitPrice,
+        total_price: i.unitPrice * i.quantity,
+        created_at: sekarang,
+      })),
+    };
+    quotation.items.forEach((i) => (i.quotation_id = quotation.id));
+
+    db.quotations.unshift(quotation);
+    rfq.status = "quoted";
+    rfq.updated_at = sekarang;
+    rfq.history.push({
+      id: buatId(),
+      rfq_id: rfqId,
+      old_status: "under_review",
+      new_status: "quoted",
+      changed_by: "admin-lokal",
+      note: `Quotation ${quotation.quotation_number} versi ${versi} diterbitkan`,
+      created_at: sekarang,
+    });
+    await tulisBasisData(db);
+
+    return {
+      quotationNumber: quotation.quotation_number,
+      version: versi,
+      status: "issued",
+    };
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
   const serviceClient = createServiceSupabaseClient();
 
@@ -308,6 +407,14 @@ export async function getQuotationsByRfq({
   rfqId: string;
   cookies: () => SupabaseCookieStore;
 }): Promise<QuotationWithItems[]> {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    return db.quotations
+      .filter((x) => x.rfq_id === rfqId)
+      .sort((a, b) => b.version - a.version)
+      .map(quotationBerkasKeQuotation);
+  }
+
   const supabase = await createServerSupabaseClient(cookies());
 
   const { data, error } = await supabase
@@ -347,6 +454,19 @@ export async function updateQuotationStatusAdmin({
   quotationId: string;
   status: "issued" | "accepted" | "rejected" | "expired" | "superseded";
 }) {
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const indeks = db.quotations.findIndex((x) => x.id === quotationId);
+    if (indeks < 0) throw new Error("Quotation tidak ditemukan");
+    db.quotations[indeks] = {
+      ...db.quotations[indeks],
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    await tulisBasisData(db);
+    return db.quotations[indeks];
+  }
+
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -374,6 +494,75 @@ export async function convertQuotationToOrder({
 }: {
   quotationId: string;
 }): Promise<{ orderNumber: string; status: string }> {
+  // Mode berkas lokal: ubah quotation menjadi pesanan di berkas.
+  if (!isSupabaseConfigured()) {
+    const db = await bacaBasisData();
+    const quotation = db.quotations.find((x) => x.id === quotationId);
+    if (!quotation) throw new Error("Quotation tidak ditemukan");
+    if (quotation.status !== "accepted") {
+      throw new Error("Hanya quotation yang disetujui yang dapat dikonversi");
+    }
+
+    const rfq = db.rfqs.find((r) => r.id === quotation.rfq_id);
+    if (!rfq) throw new Error("RFQ tidak ditemukan");
+    if (rfq.status === "converted_to_order") {
+      throw new Error("RFQ sudah dikonversi menjadi pesanan");
+    }
+
+    const sekarang = new Date().toISOString();
+    const tahun = new Date().getFullYear();
+    const nomor =
+      db.orders.filter((o) => o.order_number.includes(`-${tahun}-`)).length + 1;
+
+    const pesanan: PesananBerkas = {
+      id: buatId(),
+      order_number: buatNomorPesanan(tahun, nomor),
+      user_id: rfq.created_by,
+      customer_name: rfq.contact_name,
+      customer_email: rfq.business_email,
+      customer_phone: null,
+      delivery_address: rfq.delivery_location,
+      subtotal: quotation.subtotal,
+      shipping_cost: quotation.shipping_cost,
+      tax: 0,
+      total: quotation.total,
+      status: "pending",
+      payment_method: null,
+      payment_proof_url: null,
+      notes: `Konversi quotation ${quotation.quotation_number}`,
+      created_at: sekarang,
+      updated_at: sekarang,
+      items: quotation.items.map((i) => ({
+        id: buatId(),
+        order_id: "",
+        product_id: null,
+        product_name: i.product_name,
+        product_sku: null,
+        quantity: i.quantity,
+        unit_price: i.unit_price,
+        total_price: i.total_price,
+        created_at: sekarang,
+      })),
+    };
+    pesanan.items.forEach((i) => (i.order_id = pesanan.id));
+    db.orders.unshift(pesanan);
+
+    rfq.status = "converted_to_order";
+    rfq.updated_at = sekarang;
+    rfq.history.push({
+      id: buatId(),
+      rfq_id: rfq.id,
+      old_status: "accepted",
+      new_status: "converted_to_order",
+      changed_by: "admin-lokal",
+      note: `Dikonversi menjadi pesanan ${pesanan.order_number}`,
+      created_at: sekarang,
+    });
+
+    await tulisBasisData(db);
+    return { orderNumber: pesanan.order_number, status: pesanan.status };
+  }
+
   const supabase = createServiceSupabaseClient();
 
   // Ambil quotation dengan items dan RFQ

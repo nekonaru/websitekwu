@@ -5,10 +5,18 @@
 import { NextResponse } from "next/server";
 import {
   createServerSupabaseClient,
+  isSupabaseConfigured,
   toSupabaseCookieStore,
 } from "@/lib/supabase";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { createRfqSchema } from "@/lib/validation/rfq";
+import {
+  bacaBasisData,
+  tulisBasisData,
+  buatId,
+  buatNomorRfq,
+  type RfqBerkas,
+} from "@/lib/file-db";
 import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
@@ -17,7 +25,6 @@ export async function POST(req: Request) {
   if (diblokir) return diblokir;
 
   try {
-    const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const body = await req.json();
 
     const parsed = createRfqSchema.safeParse(body);
@@ -30,7 +37,63 @@ export async function POST(req: Request) {
 
     const { organizationName, contactName, businessEmail, deliveryLocation, requiredDate, items } = parsed.data;
 
-    // Ambil pengguna yang login untuk mengisi kolom pembuat RFQ.
+    // Mode berkas lokal: simpan RFQ ke data/kwu.json.
+    if (!isSupabaseConfigured()) {
+      const db = await bacaBasisData();
+      const sekarang = new Date().toISOString();
+      const tahun = new Date().getFullYear();
+      const nomor =
+        db.rfqs.filter((r) => r.rfq_number.includes(`-${tahun}-`)).length + 1;
+
+      const rfq: RfqBerkas = {
+        id: buatId(),
+        rfq_number: buatNomorRfq(tahun, nomor),
+        organization_name: organizationName,
+        contact_name: contactName,
+        business_email: businessEmail,
+        delivery_location: deliveryLocation,
+        required_date: requiredDate,
+        status: "submitted",
+        created_by: "pengguna-lokal",
+        assigned_to: null,
+        admin_notes: null,
+        created_at: sekarang,
+        updated_at: sekarang,
+        items: items.map((item) => ({
+          id: buatId(),
+          rfq_id: "",
+          product_id: null,
+          product_name: item.productName,
+          product_details: item.productDetails,
+          quantity: item.quantity,
+          unit: item.unit,
+          created_at: sekarang,
+        })),
+        history: [
+          {
+            id: buatId(),
+            rfq_id: "",
+            old_status: null,
+            new_status: "submitted",
+            changed_by: "pengguna-lokal",
+            note: "RFQ diajukan",
+            created_at: sekarang,
+          },
+        ],
+      };
+      rfq.items.forEach((i) => (i.rfq_id = rfq.id));
+      rfq.history.forEach((h) => (h.rfq_id = rfq.id));
+
+      db.rfqs.unshift(rfq);
+      await tulisBasisData(db);
+
+      return NextResponse.json(
+        { success: true, data: { rfqNumber: rfq.rfq_number, status: "submitted" } },
+        { status: 201 }
+      );
+    }
+
+    const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
     const {
       data: { user },
     } = await supabase.auth.getUser();

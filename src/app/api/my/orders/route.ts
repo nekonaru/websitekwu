@@ -5,13 +5,27 @@
 import { NextResponse } from "next/server";
 import {
   createServerSupabaseClient,
+  isSupabaseConfigured,
   toSupabaseCookieStore,
 } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
+import { getMyOrders } from "@/services/order.service";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
-    const supabase = await createServerSupabaseClient(toSupabaseCookieStore(await cookies()));
+    const cookieStore = toSupabaseCookieStore(await cookies());
+
+    // Mode berkas lokal: satu pengguna lokal, tanpa sesi login.
+    if (!isSupabaseConfigured()) {
+      const data = await getMyOrders({ cookies: () => cookieStore });
+      return NextResponse.json({ success: true, data });
+    }
+
+    const supabase = await createServerSupabaseClient(cookieStore);
 
     const {
       data: { user },

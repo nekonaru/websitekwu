@@ -2,6 +2,20 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 /**
+ * Mode berkas lokal: Supabase tidak dikonfigurasi (atau memakai placeholder),
+ * sehingga tidak ada cookie sesi sama sekali. Dalam mode ini seluruh route
+ * terbuka karena semua data tersimpan di data/kwu.json dan pembacaan sudah
+ * dibatasi oleh helper requireAdmin/requireUser.
+ */
+function modeBerkas(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return true;
+  if (url.includes("placeholder") || key.includes("placeholder")) return true;
+  return false;
+}
+
+/**
  * Route yang hanya dapat diakses setelah pengguna masuk.
  * Keranjang sengaja tidak dilindungi karena isinya disimpan di sisi klien
  * dan pengguna boleh melihatnya sebelum masuk.
@@ -35,6 +49,11 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon.ico")
   ) {
+    return NextResponse.next();
+  }
+
+  // Mode berkas lokal: lewati pemeriksaan sesi sepenuhnya.
+  if (modeBerkas()) {
     return NextResponse.next();
   }
 
