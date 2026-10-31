@@ -4,14 +4,18 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { getRfqById, getQuotationsByRfq } from "@/services/rfq.service";
 import type { SupabaseCookieStore } from "@/lib/supabase";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 60, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { id } = await params;
 

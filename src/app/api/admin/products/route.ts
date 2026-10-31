@@ -5,9 +5,14 @@
 import { NextResponse } from "next/server";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { getErrorMessage } from "@/lib/format";
-import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
+import {
+  createServiceSupabaseClient,
+  isSupabaseConfigured,
+  toSupabaseCookieStore,
+} from "@/lib/supabase";
 import { requireAdmin } from "@/lib/auth";
 import { createProductAdmin, toProduct, type ProductRow } from "@/services/product.service";
+import { bacaBasisData } from "@/lib/file-db";
 import { z } from "zod";
 import { cookies } from "next/headers";
 
@@ -24,6 +29,12 @@ export async function GET(req: Request) {
         { success: false, error: "Akses admin diperlukan" },
         { status: 401 }
       );
+    }
+
+    // Mode berkas lokal: ambil semua produk dari data/kwu.json.
+    if (!isSupabaseConfigured()) {
+      const db = await bacaBasisData();
+      return NextResponse.json({ success: true, data: db.products });
     }
 
     const supabase = createServiceSupabaseClient();
@@ -65,6 +76,9 @@ const productSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const diblokir = tanggapiJikaMelebihi(req, 20, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const admin = await requireAdmin(
       toSupabaseCookieStore(await cookies())
