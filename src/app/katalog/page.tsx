@@ -10,6 +10,7 @@ import {
   ChevronRight,
   SlidersHorizontal,
   PackageSearch,
+  ArrowUpDown,
 } from "lucide-react";
 import { ProductCard } from "@/components/products/product-card";
 
@@ -30,6 +31,15 @@ export interface Product {
 }
 
 const PAGE_SIZE = 9;
+
+/** Pilihan urutan produk yang tersedia di katalog. */
+const URUTAN = [
+  { id: "", label: "Terbaru" },
+  { id: "murah", label: "Harga termurah" },
+  { id: "mahal", label: "Harga termahal" },
+  { id: "az", label: "Nama A sampai Z" },
+  { id: "za", label: "Nama Z sampai A" },
+] as const;
 
 const RENTANG_HARGA = [
   { id: "", label: "Semua harga", min: 0, max: Number.POSITIVE_INFINITY },
@@ -65,6 +75,7 @@ function KatalogIsi() {
   const queryParam = searchParams.get("q") ?? "";
   const kategoriParam = searchParams.get("category") ?? "";
   const hargaParam = searchParams.get("harga") ?? "";
+  const urutParam = searchParams.get("urut") ?? "";
   const halamanParam = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -144,17 +155,33 @@ function KatalogIsi() {
     };
   }, [cariTertunda, kategoriParam]);
 
-  // Terapkan filter harga di sisi klien.
+  // Terapkan filter harga di sisi klien, lalu urutkan hasilnya.
   const rentangDipilih =
     RENTANG_HARGA.find((r) => r.id === hargaParam) ?? RENTANG_HARGA[0];
 
-  const produkTersaring = useMemo(
-    () =>
-      products.filter(
-        (p) => p.price >= rentangDipilih.min && p.price <= rentangDipilih.max
-      ),
-    [products, rentangDipilih]
-  );
+  const produkTersaring = useMemo(() => {
+    const hasil = products.filter(
+      (p) => p.price >= rentangDipilih.min && p.price <= rentangDipilih.max
+    );
+
+    switch (urutParam) {
+      case "murah":
+        return [...hasil].sort((a, b) => a.price - b.price);
+      case "mahal":
+        return [...hasil].sort((a, b) => b.price - a.price);
+      case "az":
+        return [...hasil].sort((a, b) => a.name.localeCompare(b.name, "id"));
+      case "za":
+        return [...hasil].sort((a, b) => b.name.localeCompare(a.name, "id"));
+      default:
+        // Urutan terbaru berdasarkan waktu pembuatan bila tersedia.
+        return [...hasil].sort(
+          (a, b) =>
+            (b.createdAt ? Date.parse(b.createdAt) : 0) -
+            (a.createdAt ? Date.parse(a.createdAt) : 0)
+        );
+    }
+  }, [products, rentangDipilih, urutParam]);
 
   const totalHalaman = Math.max(
     Math.ceil(produkTersaring.length / PAGE_SIZE),
@@ -179,7 +206,7 @@ function KatalogIsi() {
   }
 
   function bersihkanFilter() {
-    perbaruiUrl({ q: null, category: null, harga: null, page: null });
+    perbaruiUrl({ q: null, category: null, harga: null, urut: null, page: null });
     setInputCari("");
     setFilterOpen(false);
   }
@@ -365,14 +392,37 @@ function KatalogIsi() {
             )}
           </div>
 
-          {/* Ringkasan hasil */}
-          <p className="mb-4 text-sm text-muted">
-            <span className="font-semibold text-heading">
-              {produkTersaring.length} produk
-            </span>
-            {queryParam && <> untuk pencarian “{queryParam}”</>}
-            {kategoriParam && <> dalam kategori {judulKategori(kategoriParam)}</>}
-          </p>
+          {/* Ringkasan hasil dan urutan */}
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted">
+              <span className="font-semibold text-heading">
+                {produkTersaring.length} produk
+              </span>
+              {queryParam && <> untuk pencarian “{queryParam}”</>}
+              {kategoriParam && <> dalam kategori {judulKategori(kategoriParam)}</>}
+            </p>
+
+            <label className="inline-flex w-fit items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 shadow-soft">
+              <ArrowUpDown
+                className="h-4 w-4 shrink-0 text-primary"
+                aria-hidden="true"
+              />
+              <span className="sr-only">Urutkan produk</span>
+              <select
+                value={urutParam}
+                onChange={(e) =>
+                  perbaruiUrl({ urut: e.target.value || null, page: null })
+                }
+                className="cursor-pointer bg-transparent text-sm font-medium text-heading focus:outline-none"
+              >
+                {URUTAN.map((opsi) => (
+                  <option key={opsi.id} value={opsi.id}>
+                    {opsi.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           {/* Daftar produk */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
