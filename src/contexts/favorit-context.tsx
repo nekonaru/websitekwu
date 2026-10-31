@@ -72,6 +72,9 @@ function commit(next: FavoritItem[]) {
 function subscribe(listener: () => void) {
   listeners.add(listener);
 
+  // Sinkronkan antar tab: dengarkan perubahan localStorage dari tab lain.
+  pasangPendengarStorage();
+
   // Saat pertama kali ada pendengar di browser, muat isi favorit.
   if (items === EMPTY_ITEMS) {
     const stored = readStorage();
@@ -83,6 +86,22 @@ function subscribe(listener: () => void) {
   return () => {
     listeners.delete(listener);
   };
+}
+
+/** Pasang satu pendengar `storage` yang menyalin perubahan dari tab lain. */
+let storageTerpasang = false;
+function pasangPendengarStorage() {
+  if (storageTerpasang || typeof window === "undefined") return;
+  storageTerpasang = true;
+
+  window.addEventListener("storage", (event) => {
+    // null berarti localStorage.clear(), jadi muat ulang juga.
+    if (event.key !== null && event.key !== STORAGE_KEY) return;
+    const berikutnya = readStorage();
+    if (JSON.stringify(berikutnya) === JSON.stringify(items)) return;
+    items = berikutnya;
+    listeners.forEach((l) => l());
+  });
 }
 
 function getSnapshot(): FavoritItem[] {
