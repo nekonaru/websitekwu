@@ -16,6 +16,13 @@ import {
 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useFavorit } from "@/contexts/favorit-context";
+import {
+  bacaRiwayatCari,
+  simpanKataCari,
+  hapusKataCari,
+  bersihkanRiwayatCari,
+} from "@/lib/riwayat-cari";
+import { History } from "lucide-react";
 
 const NAVIGASI = [
   { href: "/", label: "Beranda", icon: LayoutGrid },
@@ -31,6 +38,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [riwayat, setRiwayat] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Kunci scroll halaman saat lapisan menu terbuka.
@@ -67,7 +75,12 @@ export function Header() {
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const trimmed = query.trim();
-    router.push(trimmed ? `/katalog?q=${encodeURIComponent(trimmed)}` : "/katalog");
+    if (trimmed) {
+      setRiwayat(simpanKataCari(trimmed));
+      router.push(`/katalog?q=${encodeURIComponent(trimmed)}`);
+    } else {
+      router.push("/katalog");
+    }
     setSearchOpen(false);
   }
 
@@ -127,7 +140,11 @@ export function Header() {
         <div className="flex items-center gap-1 sm:gap-2">
           <button
             type="button"
-            onClick={() => setSearchOpen(true)}
+            onClick={() => {
+              // Riwayat hanya dibaca di browser agar render server tetap sama.
+              setRiwayat(bacaRiwayatCari());
+              setSearchOpen(true);
+            }}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-body transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
             aria-label="Cari produk"
           >
@@ -311,6 +328,58 @@ export function Header() {
             </p>
 
             <div className="mt-8">
+              {riwayat.length > 0 && (
+                <div className="mb-6">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-heading">
+                      <History className="h-4 w-4 text-muted" aria-hidden="true" />
+                      Riwayat pencarian
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        bersihkanRiwayatCari();
+                        setRiwayat([]);
+                      }}
+                      className="text-xs font-medium text-muted transition-colors duration-200 hover:text-danger-600"
+                    >
+                      Hapus semua
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {riwayat.map((kata) => (
+                      <span
+                        key={kata}
+                        className="group inline-flex items-center gap-1 rounded-full border border-border bg-white pl-4 pr-1.5 py-2 text-sm text-body transition-colors duration-200 hover:border-primary hover:bg-primary-soft hover:text-primary"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuery(kata);
+                            setRiwayat(simpanKataCari(kata));
+                            router.push(
+                              `/katalog?q=${encodeURIComponent(kata)}`
+                            );
+                            setSearchOpen(false);
+                          }}
+                          className="text-left"
+                        >
+                          {kata}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRiwayat(hapusKataCari(kata))}
+                          aria-label={`Hapus riwayat ${kata}`}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-muted transition-colors duration-200 hover:bg-neutral-100 hover:text-danger-600"
+                        >
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <p className="mb-3 text-sm font-semibold text-heading">
                 Pencarian populer
               </p>
@@ -322,6 +391,7 @@ export function Header() {
                       type="button"
                       onClick={() => {
                         setQuery(kata);
+                        setRiwayat(simpanKataCari(kata));
                         router.push(`/katalog?q=${encodeURIComponent(kata)}`);
                         setSearchOpen(false);
                       }}
