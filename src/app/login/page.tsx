@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, LogIn, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { getErrorMessage } from "@/lib/format";
+import { redirectAman } from "@/lib/redirect";
 import { FormField } from "@/components/ui/form-field";
 import { AuthShell } from "@/components/ui/auth-shell";
 
@@ -42,7 +43,7 @@ export default function Login() {
         return;
       }
 
-      router.push(callbackUrl);
+      router.push(redirectAman(callbackUrl));
       router.refresh();
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Gagal masuk. Periksa email dan kata sandi."));
