@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronLeft,
   ShoppingBag,
+  BellRing,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { formatRupiah, formatDate, getErrorMessage } from "@/lib/format";
@@ -44,35 +46,97 @@ export default function PesananSaya() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [notifikasi, setNotifikasi] = useState<string | null>(null);
+  const [sorot, setSorot] = useState<Set<string>>(new Set());
+  const statusSebelumnya = useRef<Map<string, string>>(new Map());
+  const sudahPernahGagal = useRef(false);
+
+  /** Ambil pesanan terbaru; kembalikan daftar yang berubah status. */
+  const muatPesanan = useCallback(async (): Promise<Order[] | null> => {
+    try {
+      const res = await fetch("/api/my/orders", { cache: "no-store" });
+      const data = await res.json();
+      if (!data.success) {
+        if (!sudahPernahGagal.current) {
+          setMessage(data.error ?? "Gagal memuat riwayat pesanan");
+        }
+        return null;
+      }
+      sudahPernahGagal.current = false;
+      setMessage(null);
+      return data.data as Order[];
+    } catch (err) {
+      console.error(err);
+      if (!sudahPernahGagal.current) {
+        setMessage(getErrorMessage(err, "Gagal memuat riwayat pesanan"));
+      }
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     let aktif = true;
 
     async function loadOrders() {
-      try {
-        const res = await fetch("/api/my/orders");
-        const data = await res.json();
-        if (!aktif) return;
-        if (data.success) {
-          setOrders(data.data);
-        } else {
-          setMessage(data.error ?? "Gagal memuat riwayat pesanan");
-        }
-      } catch (err) {
-        console.error(err);
-        if (aktif) {
-          setMessage(getErrorMessage(err, "Gagal memuat riwayat pesanan"));
-        }
-      } finally {
+      const data = await muatPesanan();
+      if (!aktif || !data) {
         if (aktif) setLoading(false);
+        return;
       }
+      statusSebelumnya.current = new Map(
+        data.map((o) => [o.id, o.status])
+      );
+      setOrders(data);
+      setLoading(false);
     }
 
     loadOrders();
     return () => {
       aktif = false;
     };
-  }, []);
+  }, [muatPesanan]);
+
+  // Pantau perubahan status selama halaman terbuka (maksimal satu kali per
+  // 30 detik, dan berhenti saat tab tidak terlihat agar hemat sumber daya).
+  useEffect(() => {
+    const INTERVAL = 30_000;
+
+    async function pantau() {
+      if (document.visibilityState !== "visible") return;
+      if (statusSebelumnya.current.size === 0) return;
+
+      const data = await muatPesanan();
+      if (!data) return;
+
+      const berubah: string[] = [];
+      const pesanBerubah: string[] = [];
+
+      for (const order of data) {
+        const lama = statusSebelumnya.current.get(order.id);
+        if (lama && lama !== order.status) {
+          berubah.push(order.id);
+          pesanBerubah.push(
+            `${order.order_number}: ${
+              ORDER_STATUS_LABELS[lama as OrderStatus] ?? lama
+            } menjadi ${
+              ORDER_STATUS_LABELS[order.status as OrderStatus] ?? order.status
+            }`
+          );
+        }
+        statusSebelumnya.current.set(order.id, order.status);
+      }
+
+      if (pesanBerubah.length > 0) {
+        setOrders(data);
+        setSorot(new Set(berubah));
+        setNotifikasi(`Status pesanan diperbarui: ${pesanBerubah.join("; ")}`);
+        window.setTimeout(() => setSorot(new Set()), 6000);
+      }
+    }
+
+    const id = window.setInterval(pantau, INTERVAL);
+    return () => window.clearInterval(id);
+  }, [muatPesanan]);
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -99,6 +163,28 @@ export default function PesananSaya() {
           className="mb-4 rounded-xl border border-danger-100 bg-danger-50 p-4 text-sm text-danger-800"
         >
           {message}
+        </div>
+      )}
+
+      {notifikasi && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 flex items-start gap-3 rounded-xl border border-orange-100 bg-orange-50 p-4 text-sm text-orange-800 animate-fade-in"
+        >
+          <BellRing
+            className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+            aria-hidden="true"
+          />
+          <p className="flex-1">{notifikasi}</p>
+          <button
+            type="button"
+            onClick={() => setNotifikasi(null)}
+            aria-label="Tutup notifikasi status"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-orange-700 transition-colors duration-200 hover:bg-orange-100"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
       )}
 
@@ -138,7 +224,11 @@ export default function PesananSaya() {
           {orders.map((order) => (
             <li
               key={order.id}
-              className="rounded-2xl border border-border bg-white p-4 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card sm:p-5"
+              className={`rounded-2xl border p-4 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card sm:p-5 ${
+                sorot.has(order.id)
+                  ? "border-primary bg-orange-50/60 ring-2 ring-orange-200"
+                  : "border-border bg-white"
+              }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
