@@ -4,9 +4,12 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { updateRfqStatusAdmin } from "@/services/rfq.service";
+import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
+import { toSupabaseCookieStore } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
 
 const paramsSchema = z.object({
@@ -32,7 +35,18 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const parsedParams = paramsSchema.safeParse({ id });
     if (!parsedParams.success) {

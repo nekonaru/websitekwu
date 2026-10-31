@@ -6,6 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import {
   getPublishedProducts,
   searchProducts,
@@ -14,6 +15,10 @@ import {
 } from "@/services/product.service";
 
 export async function GET(req: Request) {
+  // Endpoint publik: batasi agar tidak dipakai membanjiri server.
+  const diblokir = tanggapiJikaMelebihi(req, 120, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category") || undefined;

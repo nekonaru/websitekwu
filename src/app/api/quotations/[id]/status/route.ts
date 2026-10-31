@@ -4,8 +4,12 @@
  */
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
+import { cookies } from "next/headers";
 import { updateQuotationStatusAdmin } from "@/services/quotation.service";
+import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
+import { toSupabaseCookieStore } from "@/lib/supabase";
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -19,7 +23,20 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
+  if (diblokir) return diblokir;
+
   try {
+    // updateQuotationStatusAdmin memakai service-role tanpa cek peran,
+    // jadi wajib diverifikasi di sini sebelum melanjutkan.
+    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Akses admin diperlukan" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const parsedParams = paramsSchema.safeParse({ id });
     if (!parsedParams.success) {

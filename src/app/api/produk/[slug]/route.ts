@@ -5,11 +5,15 @@
 import { NextResponse } from "next/server";
 import { getProductBySlug } from "@/services/product.service";
 import { getErrorMessage } from "@/lib/format";
+import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const diblokir = tanggapiJikaMelebihi(req, 120, 60_000);
+  if (diblokir) return diblokir;
+
   try {
     const { slug } = await params;
 
