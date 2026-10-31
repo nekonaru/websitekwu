@@ -35,12 +35,22 @@ export async function GET(req: Request) {
 
     const kategori = await getCategories();
 
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      source: result.source,
-      categories: kategori.map((k) => k.slug),
-    });
+    // Katalog bersifat publik dan jarang berubah: izinkan cache CDN
+    // sehingga pengunjung berikutnya tidak menunggu query basis data.
+    return NextResponse.json(
+      {
+        success: true,
+        data: result.data,
+        source: result.source,
+        categories: kategori.map((k) => k.slug),
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "public, max-age=30, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (err: unknown) {
     console.error("GET /api/products error:", err);
     return NextResponse.json(

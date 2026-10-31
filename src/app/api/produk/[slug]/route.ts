@@ -33,11 +33,19 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: product.data,
-      source: product.source,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: product.data,
+        source: product.source,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "public, max-age=30, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (err: unknown) {
     console.error("GET /api/produk/[slug] error:", err);
     return NextResponse.json(
