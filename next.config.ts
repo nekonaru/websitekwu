@@ -19,6 +19,8 @@ const csp = [
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co${
     isDev ? " ws: wss:" : ""
   }`,
+  // Di produksi, paksa semua permintaan HTTP dinaikkan ke HTTPS.
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const nextConfig: NextConfig = {
@@ -54,6 +56,18 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: csp,
           },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+          { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+          // HSTS hanya di produksi agar pengembangan lokal tidak terkunci HTTPS.
+          ...(isDev
+            ? []
+            : [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=63072000; includeSubDomains",
+                },
+              ]),
         ],
       },
       {

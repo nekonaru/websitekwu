@@ -1,5 +1,39 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { catatKeamanan } from "@/lib/api-error";
+
+/** Metode HTTP yang mengubah data sehingga butuh perlindungan CSRF. */
+const METODE_MENGUBAH = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Tolak permintaan API lintas-asal (check 16: CSRF).
+ *
+ * Browser SELALU menyertakan header Origin pada permintaan lintas-asal,
+ * sedangkan klien non-peramban (curl, server-ke-server) tidak mengirimnya.
+ * Karena itu pemeriksaan hanya berlaku bila Origin hadir dan berbeda dari
+ * asal situs: pengguna tetap dapat memakai API lewat curl, tetapi situs
+ * asing tidak dapat memaksa peramban pengguna mengirim data.
+ */
+function tolakOriginAsing(req: NextRequest): NextResponse | null {
+  if (!METODE_MENGUBAH.has(req.method)) return null;
+
+  const origin = req.headers.get("origin");
+  if (!origin) return null;
+
+  const asal = `${req.nextUrl.protocol}//${req.headers.get("host") ?? ""}`;
+  if (origin === asal) return null;
+
+  catatKeamanan("csrf-origin-ditolak", {
+    metode: req.method,
+    path: req.nextUrl.pathname,
+    origin,
+  });
+
+  return NextResponse.json(
+    { success: false, error: "Asal permintaan tidak diizinkan" },
+    { status: 403 }
+  );
+}
 
 /**
  * Mode berkas lokal: Supabase tidak dikonfigurasi (atau memakai placeholder),
@@ -49,6 +83,9 @@ export function proxy(req: NextRequest) {
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon.ico")
   ) {
+    // API: cegah CSRF dengan menolak permintaan lintas-asal (check 16).
+    const ditolak = tolakOriginAsing(req);
+    if (ditolak) return ditolak;
     return NextResponse.next();
   }
 
