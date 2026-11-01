@@ -14,12 +14,14 @@ import { cookies } from "next/headers";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { createOrder } from "@/services/order.service";
 
+/**
+ * Item hanya memuat productId dan quantity. Nama, SKU, dan harga produk
+ * diambil ulang dari database oleh createOrder (check 19: server yang
+ * menghitung total dari harga tepercaya).
+ */
 const orderItemSchema = z.object({
-  productId: z.string().optional(),
-  productName: z.string().min(1).max(200),
-  productSku: z.string().max(100).optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
+  productId: z.string().trim().min(1).max(100),
+  quantity: z.number().int().positive().max(1000),
 });
 
 const orderSchema = z.object({

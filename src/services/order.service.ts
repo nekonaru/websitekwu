@@ -141,12 +141,14 @@ function pesananBerkasKeOrder(p: PesananBerkas): OrderWithItems {
 /* Validasi                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Item pesanan hanya memuat productId dan quantity. Nama produk, SKU, dan
+ * harga tidak pernah dipercaya dari klien: semuanya diambil ulang dari
+ * database di sisi server (check 19: total dihitung dari harga tepercaya).
+ */
 const orderItemSchema = z.object({
-  productId: z.string().optional(),
-  productName: z.string().min(1).max(200),
-  productSku: z.string().max(100).optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
+  productId: z.string().trim().min(1).max(100),
+  quantity: z.number().int().positive().max(1000),
 });
 
 const orderSchema = z.object({
@@ -159,6 +161,61 @@ const orderSchema = z.object({
 });
 
 export type CreateOrderInput = z.infer<typeof orderSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Penyelesaian item dari database (harga tepercaya)                  */
+/* ------------------------------------------------------------------ */
+
+/** Item dengan harga dan nama yang sudah diambil dari database. */
+interface ItemTerverifikasi {
+  productId: string;
+  productName: string;
+  productSku: string | null;
+  quantity: number;
+  unitPrice: number;
+}
+
+/** Baris produk minimal yang dibutuhkan untuk menghitung harga. */
+interface ProdukHarga {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  stock: number;
+  is_draft: boolean;
+}
+
+/**
+ * Verifikasi item pesanan terhadap katalog: productId wajib ada di
+ * database, tidak boleh berupa draf, dan quantity tidak boleh melebihi
+ * stok. Harga diambil dari database, bukan dari klien.
+ */
+function verifikasiItem(
+  items: { productId: string; quantity: number }[],
+  produk: ProdukHarga[]
+): ItemTerverifikasi[] {
+  return items.map((item) => {
+    const ditemukan = produk.find((p) => p.id === item.productId);
+    // Pesan sengaja sama untuk "tidak ada" dan "draf" agar tidak membocorkan
+    // keberadaan produk yang belum dipublikasikan.
+    if (!ditemukan || ditemukan.is_draft) {
+      throw new Error("Salah satu produk di keranjang tidak tersedia di katalog");
+    }
+    if (item.quantity > ditemukan.stock) {
+      throw new Error(
+        `Stok "${ditemukan.name}" tidak mencukupi (tersisa ${ditemukan.stock})`
+      );
+    }
+    return {
+      productId: ditemukan.id,
+      productName: ditemukan.name,
+      productSku: ditemukan.slug,
+      quantity: item.quantity,
+      unitPrice: Number(ditemukan.price),
+    };
+  });
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Membuat pesanan baru                                               */
@@ -190,17 +247,19 @@ export async function createOrder({
     items,
   } = parsed.data;
 
-  const subtotal = items.reduce(
-    (sum, i) => sum + i.unitPrice * i.quantity,
-    0
-  );
   const shippingCost = 0;
   const tax = 0;
-  const total = subtotal + shippingCost + tax;
 
   // Mode berkas lokal: simpan pesanan ke data/kwu.json.
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
+    // Harga, nama, dan SKU diambil dari katalog lokal, bukan dari klien.
+    const itemTerverifikasi = verifikasiItem(items, db.products);
+    const subtotal = itemTerverifikasi.reduce(
+      (sum, i) => sum + i.unitPrice * i.quantity,
+      0
+    );
+    const total = subtotal + shippingCost + tax;
     const sekarang = new Date().toISOString();
     const tahun = new Date().getFullYear();
     const nomor =
@@ -224,12 +283,12 @@ export async function createOrder({
       notes: notes ?? null,
       created_at: sekarang,
       updated_at: sekarang,
-      items: items.map((item) => ({
+      items: itemTerverifikasi.map((item) => ({
         id: buatId(),
         order_id: "",
-        product_id: item.productId ?? null,
+        product_id: item.productId,
         product_name: item.productName,
-        product_sku: item.productSku ?? null,
+        product_sku: item.productSku,
         quantity: item.quantity,
         unit_price: item.unitPrice,
         total_price: item.unitPrice * item.quantity,
@@ -255,6 +314,26 @@ export async function createOrder({
 
   // Buat order dalam transaksi (menggunakan service-role untuk transaksi atomic)
   const serviceClient = createServiceSupabaseClient();
+
+  // Ambil harga tepercaya dari tabel products; subtotal tidak pernah
+  // dihitung dari nilai yang dikirim klien (check 19).
+  const produkIds = [...new Set(items.map((i) => i.productId))];
+  const { data: produkRows, error: produkError } = await serviceClient
+    .from("products")
+    .select("id, name, slug, price, stock, is_draft")
+    .in("id", produkIds);
+
+  if (produkError) throw produkError;
+
+  const itemTerverifikasi = verifikasiItem(
+    items,
+    (produkRows ?? []) as ProdukHarga[]
+  );
+  const subtotal = itemTerverifikasi.reduce(
+    (sum, i) => sum + i.unitPrice * i.quantity,
+    0
+  );
+  const total = subtotal + shippingCost + tax;
 
   // Nomor pesanan dihasilkan oleh sequence di database agar aman terhadap
   // request bersamaan.
@@ -286,11 +365,11 @@ export async function createOrder({
   if (orderError) throw orderError;
 
   const { error: itemsError } = await serviceClient.from("order_items").insert(
-    items.map((item) => ({
+    itemTerverifikasi.map((item) => ({
       order_id: order.id,
-      product_id: item.productId ?? null,
+      product_id: item.productId,
       product_name: item.productName,
-      product_sku: item.productSku ?? null,
+      product_sku: item.productSku,
       quantity: item.quantity,
       unit_price: item.unitPrice,
       total_price: item.unitPrice * item.quantity,
