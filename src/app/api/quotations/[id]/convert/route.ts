@@ -3,11 +3,11 @@
  * Konversi quotation yang disetujui menjadi pesanan B2B (admin only).
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { convertQuotationToOrder } from "@/services/quotation.service";
-import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 
@@ -25,13 +25,11 @@ export async function POST(
   try {
     // convertQuotationToOrder memakai service-role tanpa cek peran,
     // jadi wajib diverifikasi di sini sebelum melanjutkan.
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "quotations/[id]/convert"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const { id } = await params;
     const parsedParams = paramsSchema.safeParse({ id });

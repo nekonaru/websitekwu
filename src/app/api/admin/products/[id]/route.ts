@@ -3,10 +3,10 @@
  * Detail produk untuk admin.
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
 import {
   updateProductAdmin,
   deleteProductAdmin,
@@ -37,13 +37,11 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/products/[id]"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const supabase = createServiceSupabaseClient();
 
@@ -93,13 +91,11 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/products/[id]"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const body = await req.json();
     const parsed = productSchema.partial().safeParse(body);
@@ -139,13 +135,11 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/products/[id]"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     await deleteProductAdmin(id);
     return NextResponse.json({ success: true });

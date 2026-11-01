@@ -3,11 +3,11 @@
  * Buat quotation baru untuk RFQ (admin only).
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { createQuotation } from "@/services/quotation.service";
-import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
@@ -36,13 +36,11 @@ export async function POST(req: Request) {
   try {
     // Guard otorisasi di tingkat route: jangan biarkan service-role
     // dijalankan sebelum peran admin dipastikan.
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "quotations"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const body = await req.json();
     const parsed = bodySchema.safeParse(body);

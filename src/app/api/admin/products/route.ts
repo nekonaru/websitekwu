@@ -3,6 +3,7 @@
  * Daftar semua produk untuk admin (termasuk draft).
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import {
@@ -10,7 +11,6 @@ import {
   isSupabaseConfigured,
   toSupabaseCookieStore,
 } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
 import { createProductAdmin, toProduct, type ProductRow } from "@/services/product.service";
 import { bacaBasisData } from "@/lib/file-db";
 import { z } from "zod";
@@ -21,15 +21,11 @@ export async function GET(req: Request) {
   if (diblokir) return diblokir;
 
   try {
-    const admin = await requireAdmin(
-      toSupabaseCookieStore(await cookies())
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/products"
     );
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     // Mode berkas lokal: ambil semua produk dari data/kwu.json.
     if (!isSupabaseConfigured()) {
@@ -76,15 +72,11 @@ export async function POST(req: Request) {
   if (diblokir) return diblokir;
 
   try {
-    const admin = await requireAdmin(
-      toSupabaseCookieStore(await cookies())
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/products"
     );
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const body = await req.json();
     const parsed = productSchema.safeParse(body);

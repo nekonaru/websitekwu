@@ -3,11 +3,11 @@
  * Daftar RFQ untuk admin dengan filter dan pagination.
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
-import { requireAdmin } from "@/lib/auth";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";
@@ -27,15 +27,11 @@ export async function GET(req: Request) {
   if (diblokir) return diblokir;
 
   try {
-    const admin = await requireAdmin(
-      toSupabaseCookieStore(await cookies())
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/rfqs"
     );
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const { searchParams } = new URL(req.url);
     const parsed = querySchema.safeParse({

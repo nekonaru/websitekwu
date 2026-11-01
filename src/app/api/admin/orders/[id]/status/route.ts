@@ -3,11 +3,11 @@
  * Perbarui status pesanan oleh admin.
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { z } from "zod";
 import { updateOrderStatusAdmin } from "@/services/order.service";
-import { requireAdmin } from "@/lib/auth";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 import { cookies } from "next/headers";
 const statusSchema = z.object({
@@ -25,13 +25,11 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "admin/orders/[id]/status"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const body = await req.json();
     const parsed = statusSchema.safeParse(body);

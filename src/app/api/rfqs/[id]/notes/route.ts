@@ -3,11 +3,11 @@
  * Tambah catatan internal admin pada RFQ.
  */
 import { NextResponse } from "next/server";
+import { tolakBilaBukanAdmin } from "@/lib/api-auth";
 import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { addAdminNote } from "@/services/rfq.service";
-import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
 import { toSupabaseCookieStore } from "@/lib/supabase";
 import type { SupabaseCookieStore } from "@/lib/supabase";
@@ -28,13 +28,11 @@ export async function POST(
   if (diblokir) return diblokir;
 
   try {
-    const admin = await requireAdmin(toSupabaseCookieStore(await cookies()));
-    if (!admin) {
-      return NextResponse.json(
-        { success: false, error: "Akses admin diperlukan" },
-        { status: 401 }
-      );
-    }
+    const hasilAdmin = await tolakBilaBukanAdmin(
+      toSupabaseCookieStore(await cookies()),
+      "rfqs/[id]/notes"
+    );
+    if ("response" in hasilAdmin) return hasilAdmin.response;
 
     const { id } = await params;
     const parsedParams = paramsSchema.safeParse({ id });

@@ -13,16 +13,26 @@ export interface AdminUser {
   email: string | null;
 }
 
+/** Hasil verifikasi admin yang membedakan belum masuk vs bukan admin. */
+export type HasilAdmin =
+  | { status: "ok"; admin: AdminUser }
+  | { status: "belum-masuk" }
+  | { status: "bukan-admin" };
+
 /**
- * Verifikasi bahwa pemanggil adalah admin. Kembalikan objek admin bila
- * valid, atau null bila tidak terautentikasi atau bukan admin.
+ * Verifikasi peran admin di server (check 09).
+ * Membedakan "belum masuk" (401) dan "bukan admin" (403) agar respons
+ * konsisten dengan makna HTTP-nya.
  */
-export async function requireAdmin(
+export async function verifikasiAdmin(
   cookies: SupabaseCookieStore | Promise<SupabaseCookieStore>
-): Promise<AdminUser | null> {
+): Promise<HasilAdmin> {
   // Mode berkas lokal: tidak ada autentikasi, anggap sebagai admin.
   if (!isSupabaseConfigured()) {
-    return { id: "admin-lokal", email: "admin@kwu.local" };
+    return {
+      status: "ok",
+      admin: { id: "admin-lokal", email: "admin@kwu.local" },
+    };
   }
 
   const supabase = await createServerSupabaseClient(cookies);
@@ -32,15 +42,26 @@ export async function requireAdmin(
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user) return null;
+  if (error || !user) return { status: "belum-masuk" };
 
   const role =
     (user.app_metadata as { role?: string } | null)?.role ??
     (user.user_metadata as { role?: string } | null)?.role;
 
-  if (role !== "admin") return null;
+  if (role !== "admin") return { status: "bukan-admin" };
 
-  return { id: user.id, email: user.email ?? null };
+  return { status: "ok", admin: { id: user.id, email: user.email ?? null } };
+}
+
+/**
+ * Verifikasi bahwa pemanggil adalah admin. Kembalikan objek admin bila
+ * valid, atau null bila tidak terautentikasi atau bukan admin.
+ */
+export async function requireAdmin(
+  cookies: SupabaseCookieStore | Promise<SupabaseCookieStore>
+): Promise<AdminUser | null> {
+  const hasil = await verifikasiAdmin(cookies);
+  return hasil.status === "ok" ? hasil.admin : null;
 }
 
 /**
