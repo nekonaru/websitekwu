@@ -13,6 +13,7 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { createOrder } from "@/services/order.service";
+import { responsGalat } from "@/lib/api-error";
 
 /**
  * Item hanya memuat productId dan quantity. Nama, SKU, dan harga produk
@@ -85,10 +86,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: hasil }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Gagal membuat pesanan";
-    if (message === "Autentikasi diperlukan") {
-      return NextResponse.json({ success: false, error: message }, { status: 401 });
-    }
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    return responsGalat(err, "POST /api/orders", "Gagal membuat pesanan");
   }
 }

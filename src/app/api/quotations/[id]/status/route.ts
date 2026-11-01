@@ -3,7 +3,7 @@
  * Perbarui status quotation (admin only).
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { updateQuotationStatusAdmin } from "@/services/quotation.service";
@@ -65,10 +65,6 @@ export async function PATCH(
       data: { id, status: result.status },
     });
   } catch (err: unknown) {
-    console.error("PATCH /api/quotations/[id]/status error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memperbarui status quotation") },
-      { status: 400 }
-    );
+    return responsGalat(err, "PATCH /api/quotations/[id]/status", "Gagal memperbarui status quotation");
   }
 }

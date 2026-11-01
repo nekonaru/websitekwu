@@ -3,8 +3,8 @@
  * Daftar RFQ untuk admin dengan filter dan pagination.
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
-import { getErrorMessage } from "@/lib/format";
 import { cookies } from "next/headers";
 import { getAllRfqsAdmin } from "@/services/rfq.service";
 import { requireAdmin } from "@/lib/auth";
@@ -62,10 +62,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err: unknown) {
-    console.error("GET /api/admin/rfqs error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat daftar RFQ") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/admin/rfqs", "Gagal memuat daftar RFQ");
   }
 }

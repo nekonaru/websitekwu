@@ -16,6 +16,7 @@ import {
   buatNomorPesanan,
   type PesananBerkas,
 } from "@/lib/file-db";
+import { GalatApi } from "@/lib/api-error";
 
 export interface Order {
   id: string;
@@ -199,10 +200,12 @@ function verifikasiItem(
     // Pesan sengaja sama untuk "tidak ada" dan "draf" agar tidak membocorkan
     // keberadaan produk yang belum dipublikasikan.
     if (!ditemukan || ditemukan.is_draft) {
-      throw new Error("Salah satu produk di keranjang tidak tersedia di katalog");
+      throw new GalatApi(
+        "Salah satu produk di keranjang tidak tersedia di katalog"
+      );
     }
     if (item.quantity > ditemukan.stock) {
-      throw new Error(
+      throw new GalatApi(
         `Stok "${ditemukan.name}" tidak mencukupi (tersisa ${ditemukan.stock})`
       );
     }
@@ -235,7 +238,7 @@ export async function createOrder({
   // Validasi input
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error("Input pesanan tidak valid");
+    throw new GalatApi("Input pesanan tidak valid");
   }
 
   const {
@@ -309,7 +312,7 @@ export async function createOrder({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   // Buat order dalam transaksi (menggunakan service-role untuk transaksi atomic)
@@ -405,7 +408,7 @@ export async function getMyOrders({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const { data, error } = await supabase
@@ -455,7 +458,7 @@ export async function updateOrderStatusAdmin({
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const indeks = db.orders.findIndex((o) => o.id === orderId);
-    if (indeks < 0) throw new Error("Pesanan tidak ditemukan");
+    if (indeks < 0) throw new GalatApi("Pesanan tidak ditemukan", 404);
     db.orders[indeks] = {
       ...db.orders[indeks],
       status,
@@ -507,7 +510,7 @@ export async function getOrderById({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const { data, error } = await supabase

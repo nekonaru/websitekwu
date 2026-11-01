@@ -3,8 +3,8 @@
  * Daftar semua produk untuk admin (termasuk draft).
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
-import { getErrorMessage } from "@/lib/format";
 import {
   createServiceSupabaseClient,
   isSupabaseConfigured,
@@ -51,11 +51,7 @@ export async function GET(req: Request) {
       data: (data ?? []).map((p: ProductRow) => toProduct(p)),
     });
   } catch (err: unknown) {
-    console.error("GET /api/admin/products error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/admin/products", "Gagal memuat produk");
   }
 }
 
@@ -113,11 +109,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (err: unknown) {
-    console.error("POST /api/admin/products error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal membuat produk") },
-      { status: 400 }
-    );
+    return responsGalat(err, "POST /api/admin/products", "Gagal membuat produk");
   }
 }
 

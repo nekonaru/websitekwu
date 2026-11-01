@@ -3,8 +3,8 @@
  * Detail produk untuk admin.
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
-import { getErrorMessage } from "@/lib/format";
 import { createServiceSupabaseClient, toSupabaseCookieStore } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/auth";
 import {
@@ -79,11 +79,7 @@ export async function GET(
       },
     });
   } catch (err: unknown) {
-    console.error("GET /api/admin/products/[id] error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/admin/products/[id]", "Gagal memuat produk");
   }
 }
 
@@ -129,11 +125,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data });
   } catch (err: unknown) {
-    console.error("PATCH /api/admin/products/[id] error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memperbarui produk") },
-      { status: 400 }
-    );
+    return responsGalat(err, "PATCH /api/admin/products/[id]", "Gagal memperbarui produk");
   }
 }
 
@@ -158,10 +150,6 @@ export async function DELETE(
     await deleteProductAdmin(id);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    console.error("DELETE /api/admin/products/[id] error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal menghapus produk") },
-      { status: 400 }
-    );
+    return responsGalat(err, "DELETE /api/admin/products/[id]", "Gagal menghapus produk");
   }
 }

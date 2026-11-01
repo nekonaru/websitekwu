@@ -4,7 +4,7 @@
  * API key tidak pernah ke browser.
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 
 const MAX_MESSAGE_LENGTH = 1000;
@@ -217,14 +217,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, reply });
-  } catch (err) {
-    console.error("POST /api/chat error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: getErrorMessage(err, "Layanan chat tidak tersedia saat ini"),
-      },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    return responsGalat(err, "POST /api/chat", "Layanan chat tidak tersedia saat ini");
   }
 }

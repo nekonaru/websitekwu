@@ -17,6 +17,7 @@ import {
   type ProdukBerkas,
 } from "@/lib/file-db";
 import { CATEGORIES, PRODUCTS } from "@/lib/data";
+import { GalatApi } from "@/lib/api-error";
 
 export interface Product {
   id: string;
@@ -450,7 +451,7 @@ export async function updateProductAdmin(
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const indeks = db.products.findIndex((p) => p.id === id);
-    if (indeks < 0) throw new Error("Produk tidak ditemukan");
+    if (indeks < 0) throw new GalatApi("Produk tidak ditemukan", 404);
 
     const produk = db.products[indeks];
     if (input.name !== undefined) produk.name = input.name;
@@ -505,7 +506,7 @@ export async function deleteProductAdmin(id: string) {
     const db = await bacaBasisData();
     const awal = db.products.length;
     db.products = db.products.filter((p) => p.id !== id);
-    if (db.products.length === awal) throw new Error("Produk tidak ditemukan");
+    if (db.products.length === awal) throw new GalatApi("Produk tidak ditemukan", 404);
     await tulisBasisData(db);
     return;
   }

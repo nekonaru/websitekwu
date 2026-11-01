@@ -14,6 +14,7 @@ import {
 import { cookies } from "next/headers";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { bacaBasisData } from "@/lib/file-db";
+import { responsGalat } from "@/lib/api-error";
 
 export async function GET(req: Request) {
   const diblokir = tanggapiJikaMelebihi(req, 30, 60_000);
@@ -55,7 +56,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: data ?? [] });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Gagal memuat RFQ";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return responsGalat(err, "GET /api/my/rfqs", "Gagal memuat RFQ");
   }
 }

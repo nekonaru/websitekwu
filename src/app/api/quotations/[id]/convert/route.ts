@@ -3,7 +3,7 @@
  * Konversi quotation yang disetujui menjadi pesanan B2B (admin only).
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { convertQuotationToOrder } from "@/services/quotation.service";
@@ -52,10 +52,6 @@ export async function POST(
       },
     });
   } catch (err: unknown) {
-    console.error("POST /api/quotations/[id]/convert error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal mengonversi quotation menjadi pesanan") },
-      { status: 400 }
-    );
+    return responsGalat(err, "POST /api/quotations/[id]/convert", "Gagal mengonversi quotation menjadi pesanan");
   }
 }

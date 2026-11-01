@@ -3,7 +3,7 @@
  * Buat quotation baru untuk RFQ (admin only).
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { createQuotation } from "@/services/quotation.service";
@@ -70,10 +70,6 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (err: unknown) {
-    console.error("POST /api/quotations error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal membuat quotation") },
-      { status: 400 }
-    );
+    return responsGalat(err, "POST /api/quotations", "Gagal membuat quotation");
   }
 }

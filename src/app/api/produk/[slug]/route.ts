@@ -3,8 +3,8 @@
  * Detail satu produk untuk halaman produk.
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { getProductBySlug } from "@/services/product.service";
-import { getErrorMessage } from "@/lib/format";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 
 export async function GET(
@@ -47,10 +47,6 @@ export async function GET(
       }
     );
   } catch (err: unknown) {
-    console.error("GET /api/produk/[slug] error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/produk/[slug]", "Gagal memuat produk");
   }
 }

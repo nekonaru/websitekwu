@@ -3,7 +3,7 @@
  * Tambah catatan internal admin pada RFQ.
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { addAdminNote } from "@/services/rfq.service";
@@ -65,10 +65,6 @@ export async function POST(
       data: { message: "Catatan internal berhasil ditambahkan" },
     });
   } catch (err: unknown) {
-    console.error("POST /api/rfqs/[id]/notes error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal menambah catatan") },
-      { status: 400 }
-    );
+    return responsGalat(err, "POST /api/rfqs/[id]/notes", "Gagal menambah catatan");
   }
 }

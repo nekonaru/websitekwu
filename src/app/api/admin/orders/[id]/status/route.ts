@@ -3,8 +3,8 @@
  * Perbarui status pesanan oleh admin.
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
-import { getErrorMessage } from "@/lib/format";
 import { z } from "zod";
 import { updateOrderStatusAdmin } from "@/services/order.service";
 import { requireAdmin } from "@/lib/auth";
@@ -51,10 +51,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data });
   } catch (err: unknown) {
-    console.error("PATCH /api/admin/orders/[id]/status error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal mengubah status pesanan") },
-      { status: 500 }
-    );
+    return responsGalat(err, "PATCH /api/admin/orders/[id]/status", "Gagal mengubah status pesanan");
   }
 }

@@ -3,7 +3,7 @@
  * Perbarui status RFQ dengan transisi sah (admin only).
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { updateRfqStatusAdmin } from "@/services/rfq.service";
@@ -81,10 +81,6 @@ export async function PATCH(
       },
     });
   } catch (err: unknown) {
-    console.error("PATCH /api/rfqs/[id]/status error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memperbarui status RFQ") },
-      { status: 400 }
-    );
+    return responsGalat(err, "PATCH /api/rfqs/[id]/status", "Gagal memperbarui status RFQ");
   }
 }

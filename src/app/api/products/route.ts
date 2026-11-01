@@ -5,7 +5,7 @@
  * tanpa melakukan permintaan tambahan.
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import {
   getPublishedProducts,
@@ -52,10 +52,6 @@ export async function GET(req: Request) {
       }
     );
   } catch (err: unknown) {
-    console.error("GET /api/products error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat produk") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/products", "Gagal memuat produk");
   }
 }

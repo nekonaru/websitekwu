@@ -18,6 +18,7 @@ import {
   type RfqBerkas,
 } from "@/lib/file-db";
 import { cookies } from "next/headers";
+import { responsGalat } from "@/lib/api-error";
 
 export async function POST(req: Request) {
   // Batasi 5 pengajuan RFQ per 5 menit per IP untuk mencegah spam.
@@ -140,8 +141,6 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("POST /api/rfqs error:", err);
-    const message = err instanceof Error ? err.message : "Gagal membuat RFQ";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    return responsGalat(err, "POST /api/rfqs", "Gagal membuat RFQ");
   }
 }

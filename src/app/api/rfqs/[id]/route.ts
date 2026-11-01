@@ -3,7 +3,7 @@
  * Detail RFQ beserta item, riwayat status, dan daftar quotation.
  */
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "@/lib/format";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 import { getRfqById, getQuotationsByRfq } from "@/services/rfq.service";
@@ -40,10 +40,6 @@ export async function GET(
       data: { ...rfq, quotations },
     });
   } catch (err: unknown) {
-    console.error("GET /api/rfqs/[id] error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat detail RFQ") },
-      { status: 400 }
-    );
+    return responsGalat(err, "GET /api/rfqs/[id]", "Gagal memuat detail RFQ");
   }
 }

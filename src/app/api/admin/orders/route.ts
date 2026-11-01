@@ -3,8 +3,8 @@
  * Daftar semua pesanan untuk admin.
  */
 import { NextResponse } from "next/server";
+import { responsGalat } from "@/lib/api-error";
 import { tanggapiJikaMelebihi } from "@/lib/rate-limit";
-import { getErrorMessage } from "@/lib/format";
 import { getAllOrdersAdmin } from "@/services/order.service";
 import { requireAdmin } from "@/lib/auth";
 import { toSupabaseCookieStore } from "@/lib/supabase";
@@ -25,10 +25,6 @@ export async function GET(req: Request) {
     const data = await getAllOrdersAdmin();
     return NextResponse.json({ success: true, data });
   } catch (err: unknown) {
-    console.error("GET /api/admin/orders error:", err);
-    return NextResponse.json(
-      { success: false, error: getErrorMessage(err, "Gagal memuat pesanan") },
-      { status: 500 }
-    );
+    return responsGalat(err, "GET /api/admin/orders", "Gagal memuat pesanan");
   }
 }

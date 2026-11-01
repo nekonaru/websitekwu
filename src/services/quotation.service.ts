@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase";
 import { z } from "zod";
 import type { SupabaseCookieStore } from "@/lib/supabase";
+import { GalatApi } from "@/lib/api-error";
 import {
   bacaBasisData,
   tulisBasisData,
@@ -181,18 +182,18 @@ export async function createQuotation({
   if (!isSupabaseConfigured()) {
     const parsedFile = createQuotationSchema.safeParse(input);
     if (!parsedFile.success) {
-      throw new Error("Input quotation tidak valid");
+      throw new GalatApi("Input quotation tidak valid");
     }
     const { rfqId, validUntil, shippingCost, discount, terms, items } =
       parsedFile.data;
 
     const db = await bacaBasisData();
     const rfq = db.rfqs.find((r) => r.id === rfqId);
-    if (!rfq) throw new Error("RFQ tidak ditemukan");
+    if (!rfq) throw new GalatApi("RFQ tidak ditemukan", 404);
 
     const diizinkan = ["under_review", "quoted", "negotiation"];
     if (!diizinkan.includes(rfq.status)) {
-      throw new Error(
+      throw new GalatApi(
         `RFQ tidak dapat dibuat quotation dalam status ${rfq.status}`
       );
     }
@@ -271,17 +272,17 @@ export async function createQuotation({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const isAdmin = isAdminUser(user);
   if (!isAdmin) {
-    throw new Error("Hanya admin yang dapat membuat quotation");
+    throw new GalatApi("Hanya admin yang dapat membuat quotation", 403);
   }
 
   const parsed = createQuotationSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error("Input quotation tidak valid");
+    throw new GalatApi("Input quotation tidak valid");
   }
 
   const { rfqId, validUntil, shippingCost, discount, terms, items } =
@@ -295,12 +296,12 @@ export async function createQuotation({
     .single();
 
   if (rfqError || !rfq) {
-    throw new Error("RFQ tidak ditemukan");
+    throw new GalatApi("RFQ tidak ditemukan", 404);
   }
 
   const allowedStatuses = ["under_review", "quoted", "negotiation"];
   if (!allowedStatuses.includes(rfq.status)) {
-    throw new Error(
+    throw new GalatApi(
       `RFQ tidak dapat dibuat quotation dalam status ${rfq.status}`
     );
   }
@@ -457,7 +458,7 @@ export async function updateQuotationStatusAdmin({
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const indeks = db.quotations.findIndex((x) => x.id === quotationId);
-    if (indeks < 0) throw new Error("Quotation tidak ditemukan");
+    if (indeks < 0) throw new GalatApi("Quotation tidak ditemukan", 404);
     db.quotations[indeks] = {
       ...db.quotations[indeks],
       status,
@@ -498,15 +499,15 @@ export async function convertQuotationToOrder({
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const quotation = db.quotations.find((x) => x.id === quotationId);
-    if (!quotation) throw new Error("Quotation tidak ditemukan");
+    if (!quotation) throw new GalatApi("Quotation tidak ditemukan", 404);
     if (quotation.status !== "accepted") {
-      throw new Error("Hanya quotation yang disetujui yang dapat dikonversi");
+      throw new GalatApi("Hanya quotation yang disetujui yang dapat dikonversi", 409);
     }
 
     const rfq = db.rfqs.find((r) => r.id === quotation.rfq_id);
-    if (!rfq) throw new Error("RFQ tidak ditemukan");
+    if (!rfq) throw new GalatApi("RFQ tidak ditemukan", 404);
     if (rfq.status === "converted_to_order") {
-      throw new Error("RFQ sudah dikonversi menjadi pesanan");
+      throw new GalatApi("RFQ sudah dikonversi menjadi pesanan", 409);
     }
 
     const sekarang = new Date().toISOString();
@@ -573,11 +574,11 @@ export async function convertQuotationToOrder({
     .single();
 
   if (qError || !quotation) {
-    throw new Error("Quotation tidak ditemukan");
+    throw new GalatApi("Quotation tidak ditemukan", 404);
   }
 
   if (quotation.status !== "accepted") {
-    throw new Error("Hanya quotation yang disetujui yang dapat dikonversi");
+    throw new GalatApi("Hanya quotation yang disetujui yang dapat dikonversi", 409);
   }
 
   // Cek apakah sudah dikonversi (RFQ status sudah converted_to_order)
@@ -588,11 +589,11 @@ export async function convertQuotationToOrder({
     .single();
 
   if (rfqError || !rfq) {
-    throw new Error("RFQ tidak ditemukan");
+    throw new GalatApi("RFQ tidak ditemukan", 404);
   }
 
   if (rfq.status === "converted_to_order") {
-    throw new Error("RFQ sudah dikonversi menjadi pesanan");
+    throw new GalatApi("RFQ sudah dikonversi menjadi pesanan", 409);
   }
 
   // Hitung total

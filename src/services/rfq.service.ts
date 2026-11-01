@@ -15,6 +15,7 @@ import {
   buatId,
   type RfqBerkas,
 } from "@/lib/file-db";
+import { GalatApi } from "@/lib/api-error";
 
 export { getQuotationsByRfqFromQuotation as getQuotationsByRfq };
 
@@ -165,12 +166,12 @@ export async function getAllRfqsAdmin({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const isAdmin = isAdminUser(user);
   if (!isAdmin) {
-    throw new Error("Hanya admin yang dapat mengakses daftar RFQ");
+    throw new GalatApi("Hanya admin yang dapat mengakses daftar RFQ", 403);
   }
 
   let query = supabase
@@ -243,7 +244,7 @@ export async function getRfqById({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const isAdmin = isAdminUser(user);
@@ -331,17 +332,17 @@ export async function updateRfqStatusAdmin({
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const indeks = db.rfqs.findIndex((r) => r.id === rfqId);
-    if (indeks < 0) throw new Error("RFQ tidak ditemukan");
+    if (indeks < 0) throw new GalatApi("RFQ tidak ditemukan", 404);
 
     const lama = db.rfqs[indeks].status;
     const diizinkan = ALLOWED_TRANSITIONS[lama] ?? [];
     if (!diizinkan.includes(newStatus)) {
-      throw new Error(
+      throw new GalatApi(
         `Transisi status dari ${lama} ke ${newStatus} tidak diizinkan`
       );
     }
     if (newStatus === "rejected" && !note) {
-      throw new Error("Status ditolak harus disertai alasan");
+      throw new GalatApi("Status ditolak harus disertai alasan");
     }
 
     const sekarang = new Date().toISOString();
@@ -372,12 +373,12 @@ export async function updateRfqStatusAdmin({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const isAdmin = isAdminUser(user);
   if (!isAdmin) {
-    throw new Error("Hanya admin yang dapat mengubah status RFQ");
+    throw new GalatApi("Hanya admin yang dapat mengubah status RFQ", 403);
   }
 
   // Ambil RFQ saat ini
@@ -388,7 +389,7 @@ export async function updateRfqStatusAdmin({
     .single();
 
   if (rfqError || !rfq) {
-    throw new Error("RFQ tidak ditemukan");
+    throw new GalatApi("RFQ tidak ditemukan", 404);
   }
 
   const oldStatus = rfq.status;
@@ -396,14 +397,14 @@ export async function updateRfqStatusAdmin({
   // Cek transisi sah
   const allowed = ALLOWED_TRANSITIONS[oldStatus] ?? [];
   if (!allowed.includes(newStatus)) {
-    throw new Error(
+    throw new GalatApi(
       `Transisi status dari ${oldStatus} ke ${newStatus} tidak diizinkan`
     );
   }
 
   // Status rejected butuh alasan
   if (newStatus === "rejected" && !note) {
-    throw new Error("Status ditolak harus disertai alasan");
+    throw new GalatApi("Status ditolak harus disertai alasan");
   }
 
   // Perbarui status
@@ -449,7 +450,7 @@ export async function addAdminNote({
   if (!isSupabaseConfigured()) {
     const db = await bacaBasisData();
     const indeks = db.rfqs.findIndex((r) => r.id === rfqId);
-    if (indeks < 0) throw new Error("RFQ tidak ditemukan");
+    if (indeks < 0) throw new GalatApi("RFQ tidak ditemukan", 404);
     db.rfqs[indeks].admin_notes = note;
     db.rfqs[indeks].updated_at = new Date().toISOString();
     await tulisBasisData(db);
@@ -465,12 +466,12 @@ export async function addAdminNote({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error("Autentikasi diperlukan");
+    throw new GalatApi("Autentikasi diperlukan", 401);
   }
 
   const isAdmin = isAdminUser(user);
   if (!isAdmin) {
-    throw new Error("Hanya admin yang dapat menambah catatan");
+    throw new GalatApi("Hanya admin yang dapat menambah catatan", 403);
   }
 
   const { error } = await supabase.from("rfqs").update({
