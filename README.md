@@ -11,8 +11,6 @@
 
 <br />
 
-[English](README.md) | **Bahasa Indonesia**
-
 > [!WARNING]
 > Jangan pernah meng-commit `.env.local` atau secret apa pun ke repository. Service-role key Supabase dan kredensial AI hanya boleh berada di server atau environment variables.
 
