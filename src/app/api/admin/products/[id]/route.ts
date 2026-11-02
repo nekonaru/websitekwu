@@ -22,7 +22,17 @@ const productSchema = z.object({
   price: z.number().nonnegative(),
   stock: z.number().int().nonnegative(),
   category: z.string().min(1),
-  imageUrl: z.string().url().optional().nullable(),
+  // Hanya http/https: mencegah skema berbahaya (javascript:, data:) pada
+  // URL gambar yang dirender atau diambil server (check 18).
+  imageUrl: z
+    .string()
+    .url("URL gambar tidak valid")
+    .refine(
+      (u) => u.startsWith("https://") || u.startsWith("http://"),
+      "URL gambar harus diawali http:// atau https://"
+    )
+    .optional()
+    .nullable(),
   isFeatured: z.boolean().default(false),
   isDraft: z.boolean().default(false),
 });

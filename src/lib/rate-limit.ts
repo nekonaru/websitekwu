@@ -1,8 +1,14 @@
 /**
  * Pembatas laju (rate limiter) sederhana berbasis memori untuk Route Handler.
- * Cocok untuk penyebaran satu instansi. Untuk multi-instansi, ganti
- * dengan penyimpanan eksternal (misalnya Redis).
+ * Cocok untuk penyebaran satu instansi. Untuk multi-instansi (serverless/
+ * Vercel), ganti dengan penyimpanan eksternal (misalnya Redis/Upstash):
+ * batas per instansi tidak berlaku lintas instansi.
+ *
+ * Kunci di scoped per IP + per rute agar batas satu endpoint (mis. chat)
+ * tidak ikut memblokir endpoint lain (mis. checkout) pada IP yang sama.
  */
+import { catatKeamanan } from "@/lib/api-error";
+
 interface Entitas {
   jumlah: number;
   resetPada: number;
@@ -60,6 +66,8 @@ export function ambilIp(req: Request): string {
 
 /**
  * Wrapper ringkas: kembalikan Response 429 bila melebihi batas.
+ * Kunci dihitung per IP DAN per jalur rute agar endpoint tidak saling
+ * menghabiskan jatah (check 12).
  */
 export function tanggapiJikaMelebihi(
   req: Request,
@@ -67,8 +75,16 @@ export function tanggapiJikaMelebihi(
   windowMs: number
 ): Response | null {
   const ip = ambilIp(req);
-  const hasil = periksaLaju(ip, limit, windowMs);
+  let jalur = "/";
+  try {
+    jalur = new URL(req.url).pathname;
+  } catch {
+    /* URL tidak valid: pakai kunci umum */
+  }
+  const kunci = `${ip}|${jalur}`;
+  const hasil = periksaLaju(kunci, limit, windowMs);
   if (!hasil.allowed) {
+    catatKeamanan("rate-limit-ditolak", { jalur, ip, limit });
     return new Response(
       JSON.stringify({ success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." }),
       {
