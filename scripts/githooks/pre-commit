@@ -9,11 +9,14 @@
 pola='sk_live_|sk_test_|sk-ant-|AIza[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_|xoxb-[A-Za-z0-9-]{10,}|BEGIN [A-Z ]*PRIVATE KEY|sb_secret_[A-Za-z0-9]{10,}|AQ\.[A-Za-z0-9_-]{10,}|postgres(ql)?://[^[:space:]]+:[^[:space:]]+@|mongodb\+srv://'
 
 # Berkas hook ini sendiri memuat pola tersebut, jadi dikecualikan.
-kecualikan=':(exclude)scripts/githooks/pre-commit'
-
-if git diff --cached -G "$pola" --diff-filter=ACM -- . "$kecualikan" 2>/dev/null | grep -q .; then
+# Skrip pemindai (check 23/27) juga memuat pola sebagai teks deteksi,
+# bukan nilai secret.
+if git diff --cached -G "$pola" --diff-filter=ACM -- . \
+  ':(exclude)scripts/githooks/pre-commit' \
+  ':(exclude)scripts/uji-keamanan.mjs' \
+  ':(exclude)scripts/check-kebocoran-file.mjs' 2>/dev/null | grep -q .; then
   echo "DITOLAK: kemungkinan secret terdeteksi pada perubahan yang di-stage." >&2
-  echo "Periksa: git diff --cached -G \"$pola\" -- . \"$kecualikan\"" >&2
+  echo "Periksa: git diff --cached -G \"$pola\"" >&2
   echo "Hapus nilainya, pakai env var, lalu commit ulang. (check 24)" >&2
   exit 1
 fi
